@@ -1,0 +1,4 @@
+com/tegadeti/keycloak/provider/PhoneAuthenticatorFactory.class
+com/tegadeti/keycloak/provider/PhoneAuthenticator.class
+com/tegadeti/keycloak/provider/TwilioSmsService.class
+com/tegadeti/keycloak/provider/TwilioSmsService$TwilioSmsException.class

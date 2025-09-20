@@ -1,0 +1,82 @@
+-------------------------------------------------------------------------------
+Test set: com.tegadeti.keycloak.provider.PhoneAuthenticatorTest
+-------------------------------------------------------------------------------
+Tests run: 9, Failures: 0, Errors: 9, Skipped: 0, Time elapsed: 0.719 s <<< FAILURE! -- in com.tegadeti.keycloak.provider.PhoneAuthenticatorTest
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testAuthenticate_CodeVerificationStep_ShowsCodeForm -- Time elapsed: 0.658 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.models.AuthenticationExecutionModel.getId()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getExecution()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticator.showCodeVerificationForm(PhoneAuthenticator.java:153)
+	at com.tegadeti.keycloak.provider.PhoneAuthenticator.authenticate(PhoneAuthenticator.java:50)
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testAuthenticate_CodeVerificationStep_ShowsCodeForm(PhoneAuthenticatorTest.java:98)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandleCodeVerification_ExpiredCode_ShowsError -- Time elapsed: 0.004 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.http.HttpRequest.getDecodedFormParameters()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getHttpRequest()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandleCodeVerification_ExpiredCode_ShowsError(PhoneAuthenticatorTest.java:186)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandleCodeVerification_ValidCode_AuthenticatesUser -- Time elapsed: 0.003 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.http.HttpRequest.getDecodedFormParameters()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getHttpRequest()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandleCodeVerification_ValidCode_AuthenticatesUser(PhoneAuthenticatorTest.java:145)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandlePhoneInput_ValidPhone_SendsSmsAndProceedsToCodeVerification -- Time elapsed: 0.003 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.http.HttpRequest.getDecodedFormParameters()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getHttpRequest()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandlePhoneInput_ValidPhone_SendsSmsAndProceedsToCodeVerification(PhoneAuthenticatorTest.java:111)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandleCodeVerification_InvalidCode_ShowsError -- Time elapsed: 0.003 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.http.HttpRequest.getDecodedFormParameters()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getHttpRequest()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandleCodeVerification_InvalidCode_ShowsError(PhoneAuthenticatorTest.java:167)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandlePhoneInput_EmptyPhone_ShowsError -- Time elapsed: 0.002 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.http.HttpRequest.getDecodedFormParameters()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getHttpRequest()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testHandlePhoneInput_EmptyPhone_ShowsError(PhoneAuthenticatorTest.java:130)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testConfiguredFor_ReturnsTrue -- Time elapsed: 0.027 s <<< ERROR!
+org.mockito.exceptions.misusing.UnnecessaryStubbingException: 
+
+Unnecessary stubbings detected.
+Clean & maintainable test code requires zero unnecessary code.
+Following stubbings are unnecessary (click to navigate to relevant line of code):
+  1. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:56)
+  2. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:57)
+  3. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:58)
+  4. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:59)
+  5. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:60)
+  6. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:61)
+  7. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:64)
+  8. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:73)
+  9. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:74)
+  10. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:75)
+Please remove unnecessary stubbings or use 'lenient' strictness. More info: javadoc for UnnecessaryStubbingException class.
+	at org.mockito.junit.jupiter.MockitoExtension.lambda$afterEach$2(MockitoExtension.java:200)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at org.mockito.junit.jupiter.MockitoExtension.afterEach(MockitoExtension.java:198)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testRequiresUser_ReturnsFalse -- Time elapsed: 0.002 s <<< ERROR!
+org.mockito.exceptions.misusing.UnnecessaryStubbingException: 
+
+Unnecessary stubbings detected.
+Clean & maintainable test code requires zero unnecessary code.
+Following stubbings are unnecessary (click to navigate to relevant line of code):
+  1. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:56)
+  2. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:57)
+  3. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:58)
+  4. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:59)
+  5. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:60)
+  6. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:61)
+  7. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:64)
+  8. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:73)
+  9. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:74)
+  10. -> at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.setUp(PhoneAuthenticatorTest.java:75)
+Please remove unnecessary stubbings or use 'lenient' strictness. More info: javadoc for UnnecessaryStubbingException class.
+	at org.mockito.junit.jupiter.MockitoExtension.lambda$afterEach$2(MockitoExtension.java:200)
+	at java.base/java.util.Optional.ifPresent(Optional.java:178)
+	at org.mockito.junit.jupiter.MockitoExtension.afterEach(MockitoExtension.java:198)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
+
+com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testAuthenticate_FirstTime_ShowsPhoneInputForm -- Time elapsed: 0.003 s <<< ERROR!
+java.lang.NullPointerException: Cannot invoke "org.keycloak.models.AuthenticationExecutionModel.getId()" because the return value of "org.keycloak.authentication.AuthenticationFlowContext.getExecution()" is null
+	at com.tegadeti.keycloak.provider.PhoneAuthenticator.showPhoneInputForm(PhoneAuthenticator.java:72)
+	at com.tegadeti.keycloak.provider.PhoneAuthenticator.authenticate(PhoneAuthenticator.java:47)
+	at com.tegadeti.keycloak.provider.PhoneAuthenticatorTest.testAuthenticate_FirstTime_ShowsPhoneInputForm(PhoneAuthenticatorTest.java:84)
+
