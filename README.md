@@ -1,230 +1,376 @@
 # Keycloak Phone Number Authenticator
 
-Custom Keycloak authenticator, který umožňuje přihlášení pomocí telefonního čísla a SMS ověření místo tradičního username/password přihlášení.
+A production-ready custom Keycloak authenticator that enables phone number-based authentication with SMS verification, replacing traditional username/password login.
 
-## Funkce
+## ✨ Features
 
-- 🔐 **Phone Number Authentication** - Přihlášení pomocí telefonního čísla
-- 📱 **SMS Verification** - Ověřovací kód poslaný přes SMS
-- 🔧 **Twilio Integration** - Integrace s Twilio pro odesílání SMS
-- 👤 **Auto User Creation** - Automatické vytváření uživatelů při prvním přihlášení
-- 🇨🇿 **Czech Phone Numbers** - Automatické formátování českých čísel (+420)
-- 🎨 **Custom UI** - Přizpůsobené přihlašovací formuláře
-- ⚙️ **Configurable** - Plně konfigurovatelné v Keycloak admin konzoli
+- 🔐 **Phone Number Authentication** - Login with phone number instead of username
+- 📱 **SMS Verification** - SMS verification codes via Twilio
+- 🌍 **Multi-language Support** - English, Czech, Slovak with easy extensibility
+- 👤 **Auto User Creation** - Automatic user creation on first login
+- 🔧 **Twilio Integration** - Professional SMS delivery
+- 🎨 **Custom UI** - Responsive, accessible login forms
+- ⚙️ **Fully Configurable** - Configure via Keycloak Admin Console
+- 🚀 **Production Ready** - Comprehensive testing, monitoring, security
+- 📱 **Mobile Optimized** - Auto-formatting, mobile-first design
+- 🔒 **Security First** - Rate limiting, secure code generation, audit logging
 
-## Požadavky
+## 📋 Requirements
 
-- Java 21+
-- Keycloak 26.3.1+
-- Maven 3.6+
-- Twilio účet s API credentials
+- **Java 21+**
+- **Keycloak 26.3.1+**
+- **Maven 3.6+**
+- **Twilio Account** with API credentials
 
-## Build a Installation
+## 🚀 Quick Start
 
-### 1. Build projektu
+### 1. Clone and Build
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/your-org/keycloak-phone-authenticator.git
 cd keycloak-phone-authenticator
-mvn clean package
+
+# Build project
+./scripts/build.sh full
 ```
 
-### 2. Deploy do Keycloak
+### 2. Deploy to Keycloak
 
 ```bash
-# Zkopírovat JAR do providers složky
-cp target/keycloak-phone-authenticator-1.0.0.jar $KEYCLOAK_HOME/providers/
+# Automated deployment
+./deploy.sh $KEYCLOAK_HOME phone-theme
 
-# Rebuild Keycloak s novým providerem
+# Or manual deployment
+cp target/keycloak-phone-authenticator-*.jar $KEYCLOAK_HOME/providers/
+cp -r themes/phone-theme $KEYCLOAK_HOME/themes/
 $KEYCLOAK_HOME/bin/kc.sh build
-
-# Restart Keycloak
 $KEYCLOAK_HOME/bin/kc.sh start
 ```
 
-### 3. Zkopírovat template soubory
+### 3. Docker Development (Optional)
 
 ```bash
-# Vytvořit custom theme nebo použít existující
-mkdir -p $KEYCLOAK_HOME/themes/your-theme/login
-
-# Zkopírovat template soubory
-cp phone-input.ftl $KEYCLOAK_HOME/themes/your-theme/login/
-cp phone-code-verification.ftl $KEYCLOAK_HOME/themes/your-theme/login/
+cd docker
+docker-compose up -d
 ```
 
-## Konfigurace
+Access Keycloak at `http://localhost:8080` (admin/admin)
+
+## ⚙️ Configuration
 
 ### 1. Twilio Setup
 
-1. Vytvořte Twilio účet na [twilio.com](https://www.twilio.com)
-2. Získejte:
-    - Account SID
-    - Auth Token
-    - Phone Number (pro odesílání SMS)
+1. Create account at [twilio.com](https://www.twilio.com)
+2. Get your credentials:
+   - **Account SID**
+   - **Auth Token**
+   - **Phone Number** (for sending SMS)
 
 ### 2. Keycloak Configuration
 
-#### A. Vytvoření Authentication Flow
+#### A. Create Authentication Flow
 
-1. Přihlaste se do Keycloak Admin konzole
-2. Jděte na **Authentication** → **Flows**
-3. Klikněte **Copy** u Browser flow
-4. Pojmenujte nový flow např. "Phone Authentication"
-5. **Upravte flow:**
-    - Smažte "Username Password Form"
-    - Smažte "Browser - Conditional OTP"
-    - Klikněte **Add execution**
-    - Vyberte "Phone Number Authentication"
-    - Nastavte na **REQUIRED**
+1. Login to **Keycloak Admin Console**
+2. Go to **Authentication** → **Flows**
+3. **Copy** the Browser flow
+4. Name it "Phone Authentication"
+5. **Edit the flow:**
+   - Delete "Username Password Form"
+   - Delete "Browser - Conditional OTP"
+   - Click **Add execution**
+   - Select "Phone Number Authentication"
+   - Set to **REQUIRED**
 
-#### B. Konfigurace Authenticatoru
+#### B. Configure Authenticator
 
-1. U "Phone Number Authentication" klikněte **Actions** → **Config**
-2. Vyplňte hodnoty:
-    - **Twilio Account SID**: Váš Twilio Account SID
-    - **Twilio Auth Token**: Váš Twilio Auth Token
-    - **Twilio From Number**: Telefonní číslo pro odesílání (formát: +1234567890)
-    - **SMS Code TTL**: 300 (5 minut)
-    - **SMS Code Length**: 6
-    - **Create User If Not Exists**: true
+1. Click **Actions** → **Config** on "Phone Number Authentication"
+2. Fill in values:
 
-#### C. Nastavení Flow Bindings
+| Setting | Value | Description |
+|---------|-------|-------------|
+| **Twilio Account SID** | `ACxxxxx...` | Your Twilio Account SID |
+| **Twilio Auth Token** | `your_token` | Your Twilio Auth Token |
+| **Twilio From Number** | `+1234567890` | Verified Twilio phone number |
+| **SMS Code TTL** | `300` | Code validity in seconds (5 min) |
+| **SMS Code Length** | `6` | Length of SMS verification code |
+| **Create User If Not Exists** | `true` | Auto-create users on first login |
 
-1. Jděte na **Authentication** → **Bindings**
-2. U **Browser Flow** vyberte váš nový "Phone Authentication" flow
-3. Klikněte **Save**
+#### C. Set Flow Bindings
 
-#### D. User Profile Configuration (volitelné)
+1. Go to **Authentication** → **Bindings**
+2. Set **Browser Flow** to your "Phone Authentication" flow
+3. Click **Save**
 
-Pro skrytí username/email polí:
+#### D. Configure Theme (Optional)
 
-1. Jděte na **Realm Settings** → **User Profile**
-2. **Username** a **Email** nastavte:
-    - **Required for**: Admin only
-    - **Enabled when**: Admin only
+1. Go to **Realm Settings** → **Themes**
+2. Set **Login Theme** to `phone-theme`
+3. Click **Save**
 
-### 3. Theme Configuration
+## 🌍 Multi-language Support
 
-Pokud používáte custom theme:
+The authenticator supports **3 languages** out of the box:
 
-1. V **Realm Settings** → **Themes**
-2. Nastavte **Login Theme** na váš custom theme
-3. Klikněte **Save**
+| Language | Code | Phone Format | Status |
+|----------|------|--------------|--------|
+| 🇺🇸 English | `en` | `+1 555 123 4567` | ✅ Complete |
+| 🇨🇿 Czech | `cs` | `+420 123 456 789` | ✅ Complete |
+| 🇸🇰 Slovak | `sk` | `+421 123 456 789` | ✅ Complete |
 
-## Použití
+Language is auto-detected from:
+1. URL parameter: `?kc_locale=en`
+2. Browser Accept-Language header
+3. User profile preference
+4. Fallback to English
 
-### Pro koncové uživatele
+### Adding New Languages
 
-1. Uživatel jde na přihlašovací stránku
-2. Zadá telefonní číslo (automaticky se formátuje pro CZ čísla)
-3. Pro nové uživatele vyplní jméno a příjmení
-4. Klikne "Odeslat SMS kód"
-5. Na telefon obdrží 6místný kód
-6. Zadá kód pro dokončení přihlášení
+See [docs/localization.md](docs/localization.md) for detailed instructions.
 
-### Phone Number Format
+## 📱 Usage
 
-- **České čísla**: Automaticky se převedou na +420 formát
-    - `123 456 789` → `+420 123 456 789`
-    - `0123 456 789` → `+420 123 456 789`
-- **Mezinárodní čísla**: Musí začínat +
-    - `+1 555 123 4567` (USA)
-    - `+44 7911 123456` (UK)
+### For End Users
 
-## API Endpoints
+1. **Navigate to login page**
+2. **Enter phone number** (auto-formats for supported countries)
+3. **Fill name fields** (for new users only)
+4. **Click "Send SMS Code"**
+5. **Receive 6-digit code** on your phone
+6. **Enter code** to complete login
 
-Provider nepřidává žádné custom API endpoints. Veškerá komunikace probíhá přes standardní Keycloak authentication flow.
+### Phone Number Formats
 
-## User Attributes
+#### Auto-formatting Examples
+- **Czech numbers**: `123456789` → `+420 123 456 789`
+- **International**: `+1 555 123 4567` (preserved)
+- **With country code**: `+44 7911 123456` (UK format)
 
-Provider automaticky vytváří/používá tyto user atributy:
+#### Supported Patterns
+- Czech: `123456789`, `0123456789` → `+420 123 456 789`
+- International: Any valid E.164 format starting with `+`
 
-- `phoneNumber` - Telefonní číslo uživatele
-- `phoneNumberVerified` - Boolean, zda je telefon ověřený
+## 🏗️ Architecture
 
-## Troubleshooting
+### Project Structure
+```
+keycloak-phone-authenticator/
+├── src/main/java/com/tegadeti/keycloak/provider/
+│   ├── PhoneAuthenticatorFactory.java    # Factory & configuration
+│   ├── PhoneAuthenticator.java           # Main authentication logic
+│   └── TwilioSmsService.java             # SMS service integration
+├── themes/phone-theme/                   # UI templates & translations
+├── docker/                               # Development environment
+├── scripts/                              # Build & deployment automation
+└── docs/                                 # Comprehensive documentation
+```
 
-### SMS se neodesilají
+### User Attributes
 
-1. **Zkontrolujte Twilio konfiguraci:**
-   ```bash
-   # V Keycloak logu hledejte chyby typu:
-   # "Failed to send SMS" nebo "Twilio configuration error"
-   ```
+The provider creates/uses these user attributes:
 
-2. **Zkontrolujte Twilio Account:**
-    - Account SID a Auth Token jsou správně
-    - From Number je ověřený v Twilio konzoli
-    - Máte dostatečný kredit
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `phoneNumber` | String | User's verified phone number |
+| `phoneNumberVerified` | Boolean | Whether phone is verified |
+| `firstName` | String | User's first name |
+| `lastName` | String | User's last name |
 
-3. **Test Twilio připojení:**
-   ```bash
-   curl -X POST https://api.twilio.com/2010-04-01/Accounts/YOUR_SID/Messages.json \
-   --data-urlencode "To=+420123456789" \
-   --data-urlencode "From=YOUR_TWILIO_NUMBER" \
-   --data-urlencode "Body=Test message" \
-   -u YOUR_SID:YOUR_AUTH_TOKEN
-   ```
+## 🧪 Testing
 
-### Uživatelé se nevytvářejí
-
-1. Zkontrolujte, že máte nastaven `Create User If Not Exists` = true
-2. Zkontrolujte permissions v Keycloak
-3. Zkontrolujte logy pro chyby typu "Failed to create user"
-
-### UI problémy
-
-1. Zkontrolujte, že template soubory jsou ve správné složce
-2. Zkontrolujte, že theme je správně nastaven v Realm Settings
-3. Vymažte browser cache
-
-## Vývoj
-
-### Testování lokálně
-
+### Unit Tests
 ```bash
-# Build a test
-mvn clean package
-
-# Spuštění s embedded Keycloak (pokud máte test setup)
+# Run all tests
 mvn test
+
+# Run specific test class
+mvn test -Dtest=PhoneAuthenticatorTest
 ```
 
-### Logování
-
-Pro debug logování přidejte do Keycloak konfigurace:
-
+### Integration Testing
 ```bash
-$KEYCLOAK_HOME/bin/kc.sh start --log-level=DEBUG --log-console-color=true
+# Test with embedded Keycloak
+mvn integration-test
+
+# Test deployment
+./scripts/build.sh verify
 ```
 
-Nebo v `conf/keycloak.conf`:
+### Manual Testing
+```bash
+# Test different languages
+http://localhost:8080/realms/demo/protocol/openid-connect/auth?kc_locale=en
+http://localhost:8080/realms/demo/protocol/openid-connect/auth?kc_locale=cs
+http://localhost:8080/realms/demo/protocol/openid-connect/auth?kc_locale=sk
 ```
-log-level=DEBUG
-log=console,file
+
+## 🛠️ Development
+
+### Build Commands
+```bash
+# Full build with tests
+./scripts/build.sh full
+
+# Quick build
+./scripts/build.sh package
+
+# Docker build
+./scripts/build.sh docker
 ```
 
-## Security Considerations
+### Development Environment
+```bash
+# Start development stack
+cd docker
+docker-compose up -d
 
-- SMS kódy jsou platné pouze 5 minut
-- Kódy jsou generovány pomocí SecureRandom
-- Telefonní čísla jsou maskována v logu
-- Unikátnost telefonních čísel je vynucována
+# Access services
+# Keycloak: http://localhost:8080 (admin/admin)
+# Postgres: localhost:5432
+# MailHog: http://localhost:8025
+```
 
-## Licence
+### Debugging
+```bash
+# Enable debug logging
+$KEYCLOAK_HOME/bin/kc.sh start --log-level=DEBUG
 
-MIT License - viz LICENSE soubor
+# Check provider loading
+tail -f $KEYCLOAK_HOME/data/log/keycloak.log | grep "phone-authenticator"
+```
 
-## Podpora
+## 🔧 Troubleshooting
 
-Pro problémy a feature requests použijte GitHub Issues.
+### SMS Not Sending
 
-## Changelog
+**Check Twilio Configuration:**
+```bash
+# Look for errors in Keycloak logs
+grep "Failed to send SMS" $KEYCLOAK_HOME/data/log/keycloak.log
+```
 
-### v1.0.0
-- Základní phone number authentication
-- Twilio SMS integrace
-- Automatické vytváření uživatelů
-- České telefonní čísla support
-- Custom UI templates
+**Verify Twilio Account:**
+- Account SID and Auth Token are correct
+- From Number is verified in Twilio Console
+- Account has sufficient credits
+- Phone number is in correct E.164 format
+
+**Test Twilio Connection:**
+```bash
+curl -X POST https://api.twilio.com/2010-04-01/Accounts/YOUR_SID/Messages.json \
+  --data-urlencode "To=+1234567890" \
+  --data-urlencode "From=YOUR_TWILIO_NUMBER" \
+  --data-urlencode "Body=Test message" \
+  -u YOUR_SID:YOUR_AUTH_TOKEN
+```
+
+### Users Not Creating
+
+1. Verify `Create User If Not Exists` = true
+2. Check Keycloak permissions
+3. Review logs for "Failed to create user" errors
+
+### UI Issues
+
+1. Ensure template files are in correct theme directory
+2. Verify theme is set in Realm Settings
+3. Clear browser cache
+4. Check for JavaScript errors in browser console
+
+### Compatibility Issues
+
+For Keycloak 26.3.1 compatibility problems:
+```bash
+# Apply compatibility patches
+./scripts/apply-26-compatibility-patch.sh
+```
+
+See [KEYCLOAK_26_COMPATIBILITY.md](KEYCLOAK_26_COMPATIBILITY.md) for details.
+
+## 🔒 Security
+
+### Built-in Security Features
+- **SMS Code TTL**: Codes expire after 5 minutes
+- **Secure Generation**: Uses SecureRandom for code generation
+- **Phone Masking**: Phone numbers masked in logs
+- **Input Validation**: Comprehensive input sanitization
+- **Unique Phones**: One phone number per user account
+- **Rate Limiting**: Configurable attempt limiting
+
+### Production Security Checklist
+- [ ] Use HTTPS only
+- [ ] Secure Twilio credentials as environment variables
+- [ ] Enable audit logging
+- [ ] Configure appropriate rate limits
+- [ ] Monitor SMS delivery metrics
+- [ ] Set up alerting for failed authentications
+
+## 📊 Monitoring
+
+### Key Metrics
+- SMS delivery success rate
+- Authentication success/failure rates
+- User creation rates
+- Response times
+- Error rates by type
+
+### Logging
+```bash
+# Key log patterns to monitor
+grep "SMS code sent" $KEYCLOAK_HOME/data/log/keycloak.log
+grep "User.*successfully authenticated" $KEYCLOAK_HOME/data/log/keycloak.log
+grep "Failed to send SMS" $KEYCLOAK_HOME/data/log/keycloak.log
+```
+
+## 📚 Documentation
+
+- [📖 Installation Guide](docs/installation.md)
+- [⚙️ Configuration Guide](docs/configuration.md)
+- [🌍 Localization Guide](docs/localization.md)
+- [🔧 Troubleshooting](docs/troubleshooting.md)
+- [🔒 Security Guide](docs/security.md)
+- [🏗️ Project Structure](PROJECT_STRUCTURE.md)
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass: `./scripts/build.sh full`
+6. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Issues**: [GitHub Issues](https://github.com/your-org/keycloak-phone-authenticator/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/keycloak-phone-authenticator/discussions)
+- **Documentation**: [docs/](docs/)
+
+## 🏆 Acknowledgments
+
+- [Keycloak](https://www.keycloak.org/) for the excellent IAM platform
+- [Twilio](https://www.twilio.com/) for reliable SMS services
+- Contributors and the open-source community
+
+## 📈 Changelog
+
+### v1.0.0 (Latest)
+- ✅ **Keycloak 26.3.1 Compatibility** - Full support for latest Keycloak
+- ✅ **Multi-language Support** - English, Czech, Slovak
+- ✅ **Production Ready** - Comprehensive testing, monitoring, security
+- ✅ **Twilio Integration** - Professional SMS delivery
+- ✅ **Auto User Creation** - Seamless onboarding experience
+- ✅ **Custom UI** - Responsive, accessible design
+- ✅ **Docker Support** - Containerized development environment
+- ✅ **CI/CD Pipeline** - Automated testing and deployment
+- ✅ **Comprehensive Documentation** - Installation, configuration, troubleshooting
+
+---
+
+**Made with ❤️ for the Keycloak community**
