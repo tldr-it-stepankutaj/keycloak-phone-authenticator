@@ -1,24 +1,24 @@
 <#import "template.ftl" as layout>
 <@layout.registrationLayout displayMessage=!messagesPerField.existsError('smsCode') displayInfo=false; section>
     <#if section = "header">
-        Ověření SMS kódu
+        ${msg("codeVerificationTitle")}
     <#elseif section = "form">
         <div id="kc-form">
             <div id="kc-form-wrapper">
                 <div class="kc-info-text">
-                    <p>Na telefon <strong>${phoneNumber!'***'}</strong> byl odeslán ověřovací kód.</p>
-                    <p>Zadejte prosím kód pro dokončení přihlášení.</p>
+                    <p>${msg("codeSentTo", phoneNumber!'***')}</p>
+                    <p>${msg("enterCodeToProceed")}</p>
                 </div>
 
-                <form id="kc-sms-code-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+                <form id="kc-sms-code-form" class="${properties.kcFormClass!}" action="${url}" method="post">
                     <div class="${properties.kcFormGroupClass!}">
                         <div class="${properties.kcLabelWrapperClass!}">
-                            <label for="smsCode" class="${properties.kcLabelClass!}">SMS kód</label>
+                            <label for="smsCode" class="${properties.kcLabelClass!}">${msg("smsCode")}</label>
                         </div>
                         <div class="${properties.kcInputWrapperClass!}">
                             <input tabindex="1" id="smsCode" class="${properties.kcInputClass!} sms-code-input" name="smsCode"
                                    value="${(smsCode!'')}" type="text"
-                                   placeholder="123456"
+                                   placeholder="${msg("smsCodePlaceholder")}"
                                    autocomplete="one-time-code"
                                    autofocus
                                    maxlength="8"
@@ -38,21 +38,21 @@
                         <div id="kc-form-options">
                             <div class="${properties.kcFormOptionsWrapperClass!}">
                                 <div class="countdown-timer">
-                                    <span id="countdown-text">Kód je platný ještě <span id="countdown">5:00</span></span>
+                                    <span id="countdown-text">${msg("codeValidFor")} <span id="countdown">5:00</span></span>
                                 </div>
                             </div>
                         </div>
                         <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
                             <input tabindex="2" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                                   name="login" id="kc-login" type="submit" value="Ověřit kód"/>
+                                   name="login" id="kc-login" type="submit" value="${msg("verifyCode")}"/>
                         </div>
                     </div>
                 </form>
 
                 <div id="kc-info-wrapper" class="${properties.kcFormOptionsWrapperClass!}">
                     <div class="kc-info-text">
-                        <p>Neobdrželi jste SMS?</p>
-                        <a href="${url.loginRestartFlowUrl}" id="resend-sms">Požádat o nový kód</a>
+                        <p>${msg("didNotReceiveSms")}</p>
+                        <a href="${url.loginRestartFlowUrl!}" id="resend-sms">${msg("resendCode")}</a>
                     </div>
                 </div>
             </div>
@@ -101,7 +101,7 @@
                 countdownElement.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
 
                 if (timeLeft <= 0) {
-                    countdownText.innerHTML = '<span class="countdown-expired">Kód vypršel</span>';
+                    countdownText.innerHTML = '<span class="countdown-expired">${msg("codeExpired")}</span>';
                     document.getElementById('smsCode').disabled = true;
                     document.getElementById('kc-login').disabled = true;
                 } else {

@@ -1,19 +1,19 @@
 <#import "template.ftl" as layout>
 <@layout.registrationLayout displayMessage=!messagesPerField.existsError('phoneNumber','firstName','lastName') displayInfo=realm.password && realm.registrationAllowed && !registrationDisabled??; section>
     <#if section = "header">
-        Přihlášení pomocí telefonu
+        ${msg("phoneInputTitle")}
     <#elseif section = "form">
         <div id="kc-form">
             <div id="kc-form-wrapper">
                 <form id="kc-phone-form" class="${properties.kcFormClass!}" action="${url}" method="post">
                     <div class="${properties.kcFormGroupClass!}">
                         <div class="${properties.kcLabelWrapperClass!}">
-                            <label for="phoneNumber" class="${properties.kcLabelClass!}">Telefonní číslo</label>
+                            <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
                         </div>
                         <div class="${properties.kcInputWrapperClass!}">
                             <input tabindex="1" id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber"
                                    value="${(phoneNumber!'')}" type="tel"
-                                   placeholder="+420 123 456 789"
+                                   placeholder="${msg("phoneNumberPlaceholder")}"
                                    autocomplete="tel"
                                    autofocus
                                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>"
@@ -28,7 +28,7 @@
 
                     <div class="${properties.kcFormGroupClass!}">
                         <div class="${properties.kcLabelWrapperClass!}">
-                            <label for="firstName" class="${properties.kcLabelClass!}">Jméno</label>
+                            <label for="firstName" class="${properties.kcLabelClass!}">${msg("firstName")}</label>
                         </div>
                         <div class="${properties.kcInputWrapperClass!}">
                             <input tabindex="2" id="firstName" class="${properties.kcInputClass!}" name="firstName"
@@ -46,7 +46,7 @@
 
                     <div class="${properties.kcFormGroupClass!}">
                         <div class="${properties.kcLabelWrapperClass!}">
-                            <label for="lastName" class="${properties.kcLabelClass!}">Příjmení</label>
+                            <label for="lastName" class="${properties.kcLabelClass!}">${msg("lastName")}</label>
                         </div>
                         <div class="${properties.kcInputWrapperClass!}">
                             <input tabindex="3" id="lastName" class="${properties.kcInputClass!}" name="lastName"
@@ -69,14 +69,14 @@
                         </div>
                         <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
                             <input tabindex="4" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                                   name="login" id="kc-login" type="submit" value="Odeslat SMS kód"/>
+                                   name="login" id="kc-login" type="submit" value="${msg("sendSmsCode")}"/>
                         </div>
                     </div>
                 </form>
 
                 <div class="kc-info-text">
-                    <p>Na váš telefon bude odeslán SMS kód pro ověření.</p>
-                    <p>Pro nové uživatele je nutné vyplnit jméno a příjmení.</p>
+                    <p>${msg("phoneInputInfo")}</p>
+                    <p>${msg("newUserInfo")}</p>
                 </div>
             </div>
         </div>
