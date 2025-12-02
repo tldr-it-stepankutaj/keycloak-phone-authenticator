@@ -1,5 +1,9 @@
 # Keycloak Phone Number Authenticator
 
+[![CI](https://github.com/tegadeti/keycloak-phone-authenticator/actions/workflows/ci.yml/badge.svg)](https://github.com/tegadeti/keycloak-phone-authenticator/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/tegadeti/keycloak-phone-authenticator)](https://github.com/tegadeti/keycloak-phone-authenticator/releases)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 Custom Keycloak authenticator that enables phone number-based authentication with SMS verification via Twilio.
 
 ## Features
@@ -20,12 +24,43 @@ Custom Keycloak authenticator that enables phone number-based authentication wit
 - Maven 3.6+
 - Twilio Account (for production)
 
-## Quick Start
+## Installation
 
-### 1. Build
+### Option 1: Download from GitHub Releases (Recommended)
+
+Download the latest release from [GitHub Releases](https://github.com/tegadeti/keycloak-phone-authenticator/releases).
+
+**Available downloads:**
+
+| File | Description |
+|------|-------------|
+| `keycloak-phone-authenticator-X.X.X.jar` | Provider JAR only |
+| `phone-theme-X.X.X.tar.gz` | Login theme only |
+| `keycloak-phone-authenticator-X.X.X-complete.tar.gz` | Complete package (JAR + theme + README) |
+
+**Quick install with complete package:**
 
 ```bash
-git clone https://github.com/your-repo/keycloak-phone-authenticator.git
+# Download latest release (replace X.X.X with actual version)
+wget https://github.com/tegadeti/keycloak-phone-authenticator/releases/download/vX.X.X/keycloak-phone-authenticator-X.X.X-complete.tar.gz
+
+# Extract
+tar -xzf keycloak-phone-authenticator-X.X.X-complete.tar.gz
+cd keycloak-phone-authenticator-X.X.X
+
+# Copy to Keycloak
+cp keycloak-phone-authenticator-X.X.X.jar $KEYCLOAK_HOME/providers/
+cp -r phone-theme $KEYCLOAK_HOME/themes/
+
+# Rebuild and start Keycloak
+$KEYCLOAK_HOME/bin/kc.sh build
+$KEYCLOAK_HOME/bin/kc.sh start
+```
+
+### Option 2: Build from Source
+
+```bash
+git clone https://github.com/tegadeti/keycloak-phone-authenticator.git
 cd keycloak-phone-authenticator
 
 # Build JAR
@@ -38,31 +73,20 @@ cd keycloak-phone-authenticator
 ./build.sh verify
 ```
 
-### 2. Deploy to Keycloak
-
-#### Option A: Manual Deployment
+**Deploy to Keycloak:**
 
 ```bash
-# Copy JAR to Keycloak providers
+# Manual deployment
 cp target/keycloak-phone-authenticator-1.0.0.jar $KEYCLOAK_HOME/providers/
-
-# Copy theme
 cp -r themes/phone-theme $KEYCLOAK_HOME/themes/
-
-# Rebuild Keycloak
 $KEYCLOAK_HOME/bin/kc.sh build
-
-# Start Keycloak
 $KEYCLOAK_HOME/bin/kc.sh start
-```
 
-#### Option B: Using Build Script
-
-```bash
+# Or use build script
 ./build.sh deploy /opt/keycloak
 ```
 
-#### Option C: Docker (Development)
+### Option 3: Docker (Development)
 
 ```bash
 ./build.sh docker

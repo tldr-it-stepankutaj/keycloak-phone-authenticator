@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Get version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Update version in pom.xml
+      run: mvn versions:set -DnewVersion=${{ steps.version.outputs.VERSION }} -DgenerateBackupPoms=false
+
+    - name: Build with Maven
+      run: mvn clean package -DskipTests
+
+    - name: Run tests
+      run: mvn test
+
+    - name: Create themes archive
+      run: |
+        cd themes
+        tar -czvf ../phone-theme-${{ steps.version.outputs.VERSION }}.tar.gz phone-theme/
+        cd ..
+
+    - name: Create complete distribution archive
+      run: |
+        mkdir -p dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}
+        cp target/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
+        cp -r themes/phone-theme dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
+        cp README.md dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
+        cd dist
+        tar -czvf ../keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
+        cd ..
+
+    - name: Generate checksums
+      run: |
+        sha256sum target/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar > checksums.txt
+        sha256sum phone-theme-${{ steps.version.outputs.VERSION }}.tar.gz >> checksums.txt
+        sha256sum keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz >> checksums.txt
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Keycloak Phone Authenticator v${{ steps.version.outputs.VERSION }}
+
+          Custom Keycloak authenticator for phone number-based authentication with SMS verification via Twilio.
+
+          ### Requirements
+          - Keycloak 26.x
+          - Java 21+
+
+          ### Download Options
+
+          | File | Description |
+          |------|-------------|
+          | `keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar` | Provider JAR only |
+          | `phone-theme-${{ steps.version.outputs.VERSION }}.tar.gz` | Login theme only |
+          | `keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz` | Complete package (JAR + theme + README) |
+
+          ### Quick Installation
+
+          ```bash
+          # Download and extract complete package
+          tar -xzf keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz
+
+          # Copy to Keycloak
+          cp keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar $KEYCLOAK_HOME/providers/
+          cp -r keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/phone-theme $KEYCLOAK_HOME/themes/
+
+          # Rebuild Keycloak
+          $KEYCLOAK_HOME/bin/kc.sh build
+          ```
+
+          See README.md for full configuration instructions.
+        files: |
+          target/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar
+          phone-theme-${{ steps.version.outputs.VERSION }}.tar.gz
+          keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz
+          checksums.txt
+        draft: false
+        prerelease: false
