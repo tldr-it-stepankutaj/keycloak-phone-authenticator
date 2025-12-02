@@ -1,7 +1,7 @@
 # Keycloak Phone Number Authenticator
 
-[![CI](https://github.com/tegadeti/keycloak-phone-authenticator/actions/workflows/ci.yml/badge.svg)](https://github.com/tegadeti/keycloak-phone-authenticator/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/tegadeti/keycloak-phone-authenticator)](https://github.com/tegadeti/keycloak-phone-authenticator/releases)
+[![CI](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/actions/workflows/ci.yml/badge.svg)](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/tldr-it-stepankutaj/keycloak-phone-authenticator)](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Custom Keycloak authenticator that enables phone number-based authentication with SMS verification via Twilio.
@@ -28,7 +28,7 @@ Custom Keycloak authenticator that enables phone number-based authentication wit
 
 ### Option 1: Download from GitHub Releases (Recommended)
 
-Download the latest release from [GitHub Releases](https://github.com/tegadeti/keycloak-phone-authenticator/releases).
+Download the latest release from [GitHub Releases](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/releases).
 
 **Available downloads:**
 
@@ -42,7 +42,7 @@ Download the latest release from [GitHub Releases](https://github.com/tegadeti/k
 
 ```bash
 # Download latest release (replace X.X.X with actual version)
-wget https://github.com/tegadeti/keycloak-phone-authenticator/releases/download/vX.X.X/keycloak-phone-authenticator-X.X.X-complete.tar.gz
+wget https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/releases/download/vX.X.X/keycloak-phone-authenticator-X.X.X-complete.tar.gz
 
 # Extract
 tar -xzf keycloak-phone-authenticator-X.X.X-complete.tar.gz
@@ -60,7 +60,7 @@ $KEYCLOAK_HOME/bin/kc.sh start
 ### Option 2: Build from Source
 
 ```bash
-git clone https://github.com/tegadeti/keycloak-phone-authenticator.git
+git clone https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator.git
 cd keycloak-phone-authenticator
 
 # Build JAR
