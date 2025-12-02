@@ -1,22 +1,28 @@
+# =============================================================================
+# Keycloak with Phone Number Authenticator
+# =============================================================================
+# Build from project root: docker build -f docker/Dockerfile -t keycloak-phone-auth .
+# Or use: ./build.sh docker
+# =============================================================================
+
 FROM quay.io/keycloak/keycloak:26.3.1
 
-# Metadata
 LABEL maintainer="tegadeti"
 LABEL description="Keycloak with Phone Number Authenticator"
 LABEL version="1.0.0"
 
 # Switch to root for installation
-USER 0
+USER root
 
-# Copy provider JAR
-COPY ../target/keycloak-phone-authenticator-*.jar /opt/keycloak/providers/
+# Copy provider JAR (built with maven)
+COPY target/keycloak-phone-authenticator-*.jar /opt/keycloak/providers/
 
 # Copy themes
-COPY ../themes/ /opt/keycloak/themes/
+COPY themes/phone-theme /opt/keycloak/themes/phone-theme
 
 # Set permissions
 RUN chown -R keycloak:keycloak /opt/keycloak/providers/ && \
-    chown -R keycloak:keycloak /opt/keycloak/themes/ && \
+    chown -R keycloak:keycloak /opt/keycloak/themes/phone-theme && \
     chmod 644 /opt/keycloak/providers/*.jar
 
 # Switch back to keycloak user
@@ -28,5 +34,5 @@ RUN /opt/keycloak/bin/kc.sh build \
     --metrics-enabled=true \
     --db=postgres
 
-# Entry point
+# Default entrypoint
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]

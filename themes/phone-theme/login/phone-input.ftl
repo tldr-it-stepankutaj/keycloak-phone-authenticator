@@ -5,7 +5,7 @@
     <#elseif section = "form">
         <div id="kc-form">
             <div id="kc-form-wrapper">
-                <form id="kc-phone-form" class="${properties.kcFormClass!}" action="${url}" method="post">
+                <form id="kc-phone-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
                     <div class="${properties.kcFormGroupClass!}">
                         <div class="${properties.kcLabelWrapperClass!}">
                             <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
@@ -82,33 +82,56 @@
         </div>
 
         <script>
-            // Auto-formátování telefonního čísla
-            document.getElementById('phoneNumber').addEventListener('input', function(e) {
-                let value = e.target.value.replace(/\D/g, '');
+            (function() {
+                var phoneInput = document.getElementById('phoneNumber');
 
-                if (value.length > 0 && !value.startsWith('420')) {
-                    if (value.length === 9) {
-                        value = '420' + value;
-                    } else if (value.length === 10 && value.startsWith('0')) {
-                        value = '420' + value.substring(1);
+                // Auto-formátování telefonního čísla
+                phoneInput.addEventListener('input', function(e) {
+                    var value = e.target.value;
+                    var cursorPos = e.target.selectionStart;
+
+                    // Pokud už začíná +, ponecháme formát
+                    if (value.startsWith('+')) {
+                        // Pouze očistíme nečíselné znaky kromě + na začátku a mezer
+                        var cleaned = '+' + value.substring(1).replace(/[^\d\s]/g, '');
+                        // Omezíme na max 20 znaků
+                        e.target.value = cleaned.substring(0, 20);
+                        return;
                     }
-                }
 
-                if (value.length > 3) {
-                    value = '+' + value.substring(0, 3) + ' ' + value.substring(3);
-                }
-                if (value.length > 8) {
-                    value = value.substring(0, 8) + ' ' + value.substring(8);
-                }
-                if (value.length > 12) {
-                    value = value.substring(0, 12) + ' ' + value.substring(12);
-                }
+                    // Očistíme pouze na čísla
+                    var digits = value.replace(/\D/g, '');
 
-                e.target.value = value.substring(0, 17); // Max délka
-            });
+                    // Pokud je to české číslo bez předvolby (9 číslic)
+                    if (digits.length === 9 && !digits.startsWith('420')) {
+                        digits = '420' + digits;
+                    }
+                    // Pokud začíná 0 (národní formát)
+                    else if (digits.length >= 10 && digits.startsWith('0')) {
+                        digits = '420' + digits.substring(1);
+                    }
 
-            // Focus na první pole
-            document.getElementById('phoneNumber').focus();
+                    // Formátování s mezerami
+                    var formatted = '';
+                    if (digits.length > 0) {
+                        formatted = '+' + digits.substring(0, 3);
+                        if (digits.length > 3) {
+                            formatted += ' ' + digits.substring(3, 6);
+                        }
+                        if (digits.length > 6) {
+                            formatted += ' ' + digits.substring(6, 9);
+                        }
+                        if (digits.length > 9) {
+                            formatted += ' ' + digits.substring(9, 12);
+                        }
+                    }
+
+                    e.target.value = formatted;
+                });
+
+                // Focus na první pole
+                phoneInput.focus();
+            })();
         </script>
     </#if>
 </@layout.registrationLayout>

@@ -36,6 +36,7 @@ public class PhoneAuthenticator implements Authenticator {
     private static final String FORM_LAST_NAME = "lastName";
 
     private final TwilioSmsService smsService = new TwilioSmsService();
+    private final RateLimitService rateLimitService = RateLimitService.getInstance();
     private final SecureRandom random = new SecureRandom();
 
     @Override
@@ -67,9 +68,7 @@ public class PhoneAuthenticator implements Authenticator {
      * Zobrazí formulář pro zadání telefonního čísla
      */
     private void showPhoneInputForm(AuthenticationFlowContext context) {
-        LoginFormsProvider form = context.form()
-                .setAttribute("realm", context.getRealm())
-                .setAttribute("url", context.getActionUrl(context.getExecution().getId()));
+        LoginFormsProvider form = context.form();
 
         Response response = form.createForm("phone-input.ftl");
         context.challenge(response);
@@ -98,7 +97,7 @@ public class PhoneAuthenticator implements Authenticator {
         }
 
         // Kontrola jména (pouze pro nové uživatele)
-        boolean createUserIfNotExists = getBooleanConfig(context);
+        boolean createUserIfNotExists = getBooleanConfig(context, PhoneAuthenticatorFactory.CREATE_USER_IF_NOT_EXISTS, true);
         UserModel existingUser = findUserByPhoneNumber(context, phoneNumber);
 
         if (existingUser == null && createUserIfNotExists) {
@@ -110,6 +109,21 @@ public class PhoneAuthenticator implements Authenticator {
                 showPhoneInputFormWithError(context, "Příjmení je povinné pro nové uživatele");
                 return;
             }
+        }
+
+        // Rate limiting kontrola
+        String clientIp = getClientIpAddress(context);
+        int phoneLimit = getIntConfig(context, PhoneAuthenticatorFactory.RATE_LIMIT_PER_PHONE, 5);
+        int ipLimit = getIntConfig(context, PhoneAuthenticatorFactory.RATE_LIMIT_PER_IP, 20);
+
+        RateLimitService.RateLimitResult rateLimitResult = rateLimitService.checkRateLimit(
+                phoneNumber, clientIp, phoneLimit, ipLimit);
+
+        if (!rateLimitResult.isAllowed()) {
+            logger.warnf("Rate limit exceeded for phone: %s, IP: %s, type: %s",
+                    maskPhoneNumber(phoneNumber), clientIp, rateLimitResult.getExceededType());
+            showPhoneInputFormWithError(context, rateLimitResult.getErrorMessage());
+            return;
         }
 
         // Generování SMS kódu
@@ -149,8 +163,6 @@ public class PhoneAuthenticator implements Authenticator {
         String phoneNumber = context.getAuthenticationSession().getAuthNote(PHONE_NUMBER);
 
         LoginFormsProvider form = context.form()
-                .setAttribute("realm", context.getRealm())
-                .setAttribute("url", context.getActionUrl(context.getExecution().getId()))
                 .setAttribute("phoneNumber", maskPhoneNumber(phoneNumber));
 
         Response response = form.createForm("phone-code-verification.ftl");
@@ -175,7 +187,7 @@ public class PhoneAuthenticator implements Authenticator {
         // Kontrola vypršení kódu
         if (generatedTimeStr != null) {
             long generatedTime = Long.parseLong(generatedTimeStr);
-            long ttl = getLongConfig(context);
+            long ttl = getLongConfig(context, PhoneAuthenticatorFactory.SMS_CODE_TTL, 300L);
             if (Instant.now().getEpochSecond() - generatedTime > ttl) {
                 showCodeVerificationFormWithError(context, "SMS kód vypršel. Požádejte o nový.");
                 return;
@@ -193,7 +205,7 @@ public class PhoneAuthenticator implements Authenticator {
         UserModel user = findUserByPhoneNumber(context, phoneNumber);
 
         if (user == null) {
-            boolean createUser = getBooleanConfig(context);
+            boolean createUser = getBooleanConfig(context, PhoneAuthenticatorFactory.CREATE_USER_IF_NOT_EXISTS, true);
             if (createUser) {
                 user = createUser(context, phoneNumber);
                 if (user == null) {
@@ -217,7 +229,7 @@ public class PhoneAuthenticator implements Authenticator {
      * Vygeneruje SMS kód
      */
     private String generateSmsCode(AuthenticationFlowContext context) {
-        int codeLength = getIntConfig(context);
+        int codeLength = getIntConfig(context, PhoneAuthenticatorFactory.SMS_CODE_LENGTH, 6);
         StringBuilder code = new StringBuilder();
 
         for (int i = 0; i < codeLength; i++) {
@@ -305,39 +317,74 @@ public class PhoneAuthenticator implements Authenticator {
 
     // Utility metody pro konfiguraci
     private String getStringConfig(AuthenticationFlowContext context, String key, String defaultValue) {
+        if (context.getAuthenticatorConfig() == null ||
+                context.getAuthenticatorConfig().getConfig() == null) {
+            return defaultValue;
+        }
         String value = context.getAuthenticatorConfig().getConfig().get(key);
-        return value != null ? value : defaultValue;
+        return value != null && !value.trim().isEmpty() ? value : defaultValue;
     }
 
-    private int getIntConfig(AuthenticationFlowContext context) {
-        String value = getStringConfig(context, PhoneAuthenticatorFactory.SMS_CODE_LENGTH, String.valueOf(6));
+    private int getIntConfig(AuthenticationFlowContext context, String key, int defaultValue) {
+        String value = getStringConfig(context, key, String.valueOf(defaultValue));
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            return 6;
+            return defaultValue;
         }
     }
 
-    private long getLongConfig(AuthenticationFlowContext context) {
-        String value = getStringConfig(context, PhoneAuthenticatorFactory.SMS_CODE_TTL, String.valueOf(300L));
+    private long getLongConfig(AuthenticationFlowContext context, String key, long defaultValue) {
+        String value = getStringConfig(context, key, String.valueOf(defaultValue));
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
-            return 300L;
+            return defaultValue;
         }
     }
 
-    private boolean getBooleanConfig(AuthenticationFlowContext context) {
-        String value = getStringConfig(context, PhoneAuthenticatorFactory.CREATE_USER_IF_NOT_EXISTS, String.valueOf(true));
+    private boolean getBooleanConfig(AuthenticationFlowContext context, String key, boolean defaultValue) {
+        String value = getStringConfig(context, key, String.valueOf(defaultValue));
         return Boolean.parseBoolean(value);
+    }
+
+    /**
+     * Získá IP adresu klienta z HTTP požadavku
+     * Zohledňuje X-Forwarded-For header pro reverse proxy
+     */
+    private String getClientIpAddress(AuthenticationFlowContext context) {
+        // Zkusíme X-Forwarded-For header (pro reverse proxy)
+        String xForwardedFor = context.getHttpRequest().getHttpHeaders()
+                .getHeaderString("X-Forwarded-For");
+
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            // X-Forwarded-For může obsahovat více IP adres oddělených čárkou
+            // První je originální klient
+            String[] ips = xForwardedFor.split(",");
+            return ips[0].trim();
+        }
+
+        // Zkusíme X-Real-IP header
+        String xRealIp = context.getHttpRequest().getHttpHeaders()
+                .getHeaderString("X-Real-IP");
+
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp.trim();
+        }
+
+        // Fallback na remote address z connection
+        try {
+            return context.getConnection().getRemoteAddr();
+        } catch (Exception e) {
+            logger.warn("Could not determine client IP address", e);
+            return "unknown";
+        }
     }
 
     // Error handling metody
     private void showPhoneInputFormWithError(AuthenticationFlowContext context, String errorMessage) {
         LoginFormsProvider form = context.form()
-                .setError(errorMessage)
-                .setAttribute("realm", context.getRealm())
-                .setAttribute("url", context.getActionUrl(context.getExecution().getId()));
+                .setError(errorMessage);
 
         Response response = form.createForm("phone-input.ftl");
         context.challenge(response);
@@ -348,8 +395,6 @@ public class PhoneAuthenticator implements Authenticator {
 
         LoginFormsProvider form = context.form()
                 .setError(errorMessage)
-                .setAttribute("realm", context.getRealm())
-                .setAttribute("url", context.getActionUrl(context.getExecution().getId()))
                 .setAttribute("phoneNumber", maskPhoneNumber(phoneNumber));
 
         Response response = form.createForm("phone-code-verification.ftl");

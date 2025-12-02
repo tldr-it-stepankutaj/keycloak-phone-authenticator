@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   keycloak:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -22,13 +20,11 @@ services:
       KC_LOG_LEVEL: INFO
 
       # Development settings
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
 
     volumes:
-      - ../target/keycloak-phone-authenticator-1.0.0.jar:/opt/keycloak/providers/keycloak-phone-authenticator.jar
-      - ../themes:/opt/keycloak/themes
       - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
     command:
       - start-dev

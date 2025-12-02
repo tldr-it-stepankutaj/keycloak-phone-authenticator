@@ -8,15 +8,15 @@ import org.keycloak.authentication.AuthenticationFlowContext;
 
 /**
  * Service pro odesílání SMS zpráv přes Twilio API
+ * Podporuje development mode a konfigurovatelné šablony
  */
 public class TwilioSmsService {
 
     private static final Logger logger = Logger.getLogger(TwilioSmsService.class);
 
-    private static final String DEFAULT_SMS_TEMPLATE = "Váš ověřovací kód: %s\n\nKód je platný 5 minut.";
-
     /**
      * Odešle SMS s ověřovacím kódem
+     * V development mode pouze loguje kód místo odesílání
      *
      * @param context Authentication flow context pro získání konfigurace
      * @param phoneNumber Telefonní číslo příjemce
@@ -24,6 +24,37 @@ public class TwilioSmsService {
      * @throws TwilioSmsException Pokud se nepodaří SMS odeslat
      */
     public void sendSms(AuthenticationFlowContext context, String phoneNumber, String verificationCode)
+            throws TwilioSmsException {
+
+        // Kontrola development mode
+        boolean developmentMode = getBooleanConfigValue(context, PhoneAuthenticatorFactory.DEVELOPMENT_MODE, false);
+
+        if (developmentMode) {
+            sendDevelopmentSms(phoneNumber, verificationCode);
+            return;
+        }
+
+        // Produkční režim - odesílání přes Twilio
+        sendTwilioSms(context, phoneNumber, verificationCode);
+    }
+
+    /**
+     * Development mode - loguje SMS kód místo odesílání
+     */
+    private void sendDevelopmentSms(String phoneNumber, String verificationCode) {
+        logger.warnf("=== DEVELOPMENT MODE ===");
+        logger.warnf("SMS would be sent to: %s", phoneNumber);
+        logger.warnf("Verification code: %s", verificationCode);
+        logger.warnf("========================");
+
+        // Simulace úspěšného odeslání
+        logger.infof("Development SMS 'sent' successfully to: %s", maskPhoneNumber(phoneNumber));
+    }
+
+    /**
+     * Odesílá SMS přes Twilio API
+     */
+    private void sendTwilioSms(AuthenticationFlowContext context, String phoneNumber, String verificationCode)
             throws TwilioSmsException {
 
         // Získání konfigurace z Keycloak
@@ -36,11 +67,10 @@ public class TwilioSmsService {
 
         try {
             // Inicializace Twilio klienta
-            assert authToken != null;
             Twilio.init(accountSid, authToken);
 
-            // Příprava SMS zprávy
-            String messageBody = String.format(DEFAULT_SMS_TEMPLATE, verificationCode);
+            // Příprava SMS zprávy z šablony
+            String messageBody = buildMessageBody(context, verificationCode);
 
             // Odeslání SMS
             Message message = Message.creator(
@@ -59,16 +89,44 @@ public class TwilioSmsService {
                 throw new TwilioSmsException("SMS delivery failed with status: " + message.getStatus());
             }
 
+        } catch (TwilioSmsException e) {
+            throw e;
         } catch (Exception e) {
             logger.errorf("Failed to send SMS to %s: %s", maskPhoneNumber(phoneNumber), e.getMessage());
-
-            if (e instanceof TwilioSmsException) {
-                throw e;
-            }
-
-            // Wrap ostatní exception do TwilioSmsException
             throw new TwilioSmsException("Failed to send SMS: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Sestaví tělo SMS zprávy z konfigurovatelné šablony
+     *
+     * @param context Authentication flow context
+     * @param verificationCode Ověřovací kód
+     * @return Připravená SMS zpráva
+     */
+    private String buildMessageBody(AuthenticationFlowContext context, String verificationCode) {
+        // Získání šablony z konfigurace nebo použití výchozí
+        String template = getConfigValue(context, PhoneAuthenticatorFactory.SMS_MESSAGE_TEMPLATE);
+        if (template == null || template.trim().isEmpty()) {
+            template = PhoneAuthenticatorFactory.DEFAULT_SMS_TEMPLATE;
+        }
+
+        // Získání TTL v minutách
+        String ttlSeconds = getConfigValue(context, PhoneAuthenticatorFactory.SMS_CODE_TTL);
+        int ttlMinutes = 5; // výchozí hodnota
+        if (ttlSeconds != null && !ttlSeconds.isEmpty()) {
+            try {
+                ttlMinutes = Integer.parseInt(ttlSeconds) / 60;
+                if (ttlMinutes < 1) ttlMinutes = 1;
+            } catch (NumberFormatException e) {
+                // použijeme výchozí hodnotu
+            }
+        }
+
+        // Nahrazení placeholderů
+        return template
+                .replace("{code}", verificationCode)
+                .replace("{ttl}", String.valueOf(ttlMinutes));
     }
 
     /**
@@ -81,6 +139,17 @@ public class TwilioSmsService {
         }
 
         return context.getAuthenticatorConfig().getConfig().get(key);
+    }
+
+    /**
+     * Získá boolean konfigurační hodnotu
+     */
+    private boolean getBooleanConfigValue(AuthenticationFlowContext context, String key, boolean defaultValue) {
+        String value = getConfigValue(context, key);
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(value);
     }
 
     /**

@@ -10,7 +10,7 @@
                     <p>${msg("enterCodeToProceed")}</p>
                 </div>
 
-                <form id="kc-sms-code-form" class="${properties.kcFormClass!}" action="${url}" method="post">
+                <form id="kc-sms-code-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
                     <div class="${properties.kcFormGroupClass!}">
                         <div class="${properties.kcLabelWrapperClass!}">
                             <label for="smsCode" class="${properties.kcLabelClass!}">${msg("smsCode")}</label>
@@ -90,45 +90,52 @@
         </style>
 
         <script>
-            // Odpočítávání času
-            let timeLeft = 300; // 5 minut v sekundách
-            const countdownElement = document.getElementById('countdown');
-            const countdownText = document.getElementById('countdown-text');
+            (function() {
+                // Odpočítávání času (výchozí 5 minut)
+                var timeLeft = 300;
+                var countdownElement = document.getElementById('countdown');
+                var countdownText = document.getElementById('countdown-text');
+                var smsCodeInput = document.getElementById('smsCode');
+                var submitButton = document.getElementById('kc-login');
+                var form = document.getElementById('kc-sms-code-form');
+                var codeExpiredMsg = '${msg("codeExpired")?js_string}';
 
-            function updateCountdown() {
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                countdownElement.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+                function updateCountdown() {
+                    var minutes = Math.floor(timeLeft / 60);
+                    var seconds = timeLeft % 60;
+                    countdownElement.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
 
-                if (timeLeft <= 0) {
-                    countdownText.innerHTML = '<span class="countdown-expired">${msg("codeExpired")}</span>';
-                    document.getElementById('smsCode').disabled = true;
-                    document.getElementById('kc-login').disabled = true;
-                } else {
-                    timeLeft--;
-                    setTimeout(updateCountdown, 1000);
+                    if (timeLeft <= 0) {
+                        countdownText.innerHTML = '<span class="countdown-expired">' + codeExpiredMsg + '</span>';
+                        smsCodeInput.disabled = true;
+                        submitButton.disabled = true;
+                    } else {
+                        timeLeft--;
+                        setTimeout(updateCountdown, 1000);
+                    }
                 }
-            }
 
-            updateCountdown();
+                updateCountdown();
 
-            // Auto-submit při zadání kódu (pokud má správnou délku)
-            document.getElementById('smsCode').addEventListener('input', function(e) {
-                // Pouze čísla
-                e.target.value = e.target.value.replace(/\D/g, '');
+                // Auto-submit při zadání kódu (pokud má správnou délku 4-8 číslic)
+                smsCodeInput.addEventListener('input', function(e) {
+                    // Pouze čísla
+                    e.target.value = e.target.value.replace(/\D/g, '');
 
-                // Auto-submit pro 6místný kód
-                if (e.target.value.length === 6) {
-                    setTimeout(() => {
-                        if (e.target.value.length === 6) {
-                            document.getElementById('kc-sms-code-form').submit();
-                        }
-                    }, 500);
-                }
-            });
+                    var codeLength = e.target.value.length;
+                    // Auto-submit pro 6místný kód (nejběžnější)
+                    if (codeLength === 6) {
+                        setTimeout(function() {
+                            if (smsCodeInput.value.length === 6 && !smsCodeInput.disabled) {
+                                form.submit();
+                            }
+                        }, 500);
+                    }
+                });
 
-            // Focus na pole s kódem
-            document.getElementById('smsCode').focus();
+                // Focus na pole s kódem
+                smsCodeInput.focus();
+            })();
         </script>
     </#if>
 </@layout.registrationLayout>

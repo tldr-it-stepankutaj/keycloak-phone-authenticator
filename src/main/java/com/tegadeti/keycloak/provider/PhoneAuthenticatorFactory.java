@@ -28,6 +28,17 @@ public class PhoneAuthenticatorFactory implements AuthenticatorFactory, Configur
     public static final String SMS_CODE_LENGTH = "sms.code.length";
     public static final String CREATE_USER_IF_NOT_EXISTS = "create.user.if.not.exists";
 
+    // SMS Template
+    public static final String SMS_MESSAGE_TEMPLATE = "sms.message.template";
+    public static final String DEFAULT_SMS_TEMPLATE = "Váš ověřovací kód: {code}\n\nKód je platný {ttl} minut.";
+
+    // Rate Limiting
+    public static final String RATE_LIMIT_PER_PHONE = "rate.limit.per.phone";
+    public static final String RATE_LIMIT_PER_IP = "rate.limit.per.ip";
+
+    // Development Mode
+    public static final String DEVELOPMENT_MODE = "development.mode";
+
     private static final PhoneAuthenticator SINGLETON = new PhoneAuthenticator();
 
     @Override
@@ -136,6 +147,38 @@ public class PhoneAuthenticatorFactory implements AuthenticatorFactory, Configur
                 .helpText("Create new user if phone number is not found")
                 .type(ProviderConfigProperty.BOOLEAN_TYPE)
                 .defaultValue("true")
+                .secret(false)
+                .add()
+                .property()
+                .name(SMS_MESSAGE_TEMPLATE)
+                .label("SMS Message Template")
+                .helpText("Template for SMS message. Use {code} for verification code and {ttl} for TTL in minutes.")
+                .type(ProviderConfigProperty.STRING_TYPE)
+                .defaultValue(DEFAULT_SMS_TEMPLATE)
+                .secret(false)
+                .add()
+                .property()
+                .name(RATE_LIMIT_PER_PHONE)
+                .label("Rate Limit Per Phone (per hour)")
+                .helpText("Maximum SMS messages per phone number per hour. Set to 0 to disable.")
+                .type(ProviderConfigProperty.STRING_TYPE)
+                .defaultValue("5")
+                .secret(false)
+                .add()
+                .property()
+                .name(RATE_LIMIT_PER_IP)
+                .label("Rate Limit Per IP (per hour)")
+                .helpText("Maximum SMS messages per IP address per hour. Set to 0 to disable.")
+                .type(ProviderConfigProperty.STRING_TYPE)
+                .defaultValue("20")
+                .secret(false)
+                .add()
+                .property()
+                .name(DEVELOPMENT_MODE)
+                .label("Development Mode")
+                .helpText("When enabled, SMS codes are logged instead of being sent via Twilio. Use only for development!")
+                .type(ProviderConfigProperty.BOOLEAN_TYPE)
+                .defaultValue("false")
                 .secret(false)
                 .add()
                 .build();
