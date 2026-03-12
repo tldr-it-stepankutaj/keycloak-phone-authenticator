@@ -12,24 +12,24 @@ import java.security.SecureRandom;
 import java.time.Instant;
 
 /**
- * Hlavní authenticator pro phone number authentication
- * Implementuje dvojstupňový proces: zadání telefonu a ověření SMS kódu
+ * Main authenticator for phone number authentication
+ * Implements a two-step process: phone number input and SMS code verification
  */
 public class PhoneAuthenticator implements Authenticator {
 
     private static final Logger logger = Logger.getLogger(PhoneAuthenticator.class);
 
-    // Session notes pro ukládání dat mezi kroky
+    // Session notes for storing data between steps
     private static final String PHONE_NUMBER = "PHONE_NUMBER";
     private static final String SMS_CODE = "SMS_CODE";
     private static final String SMS_CODE_GENERATED_TIME = "SMS_CODE_GENERATED_TIME";
     private static final String STEP = "STEP";
 
-    // Kroky autentifikace
+    // Authentication steps
     private static final String STEP_PHONE_INPUT = "phone_input";
     private static final String STEP_CODE_VERIFICATION = "code_verification";
 
-    // Form parametry
+    // Form parameters
     private static final String FORM_PHONE_NUMBER = "phoneNumber";
     private static final String FORM_SMS_CODE = "smsCode";
     private static final String FORM_FIRST_NAME = "firstName";
@@ -44,10 +44,10 @@ public class PhoneAuthenticator implements Authenticator {
         String currentStep = context.getAuthenticationSession().getAuthNote(STEP);
 
         if (currentStep == null) {
-            // První krok - zobrazit formulář pro zadání telefonu
+            // First step - show phone number input form
             showPhoneInputForm(context);
         } else if (STEP_CODE_VERIFICATION.equals(currentStep)) {
-            // Druhý krok - zobrazit formulář pro ověření SMS kódu
+            // Second step - show SMS code verification form
             showCodeVerificationForm(context);
         }
     }
@@ -65,7 +65,7 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Zobrazí formulář pro zadání telefonního čísla
+     * Displays the phone number input form
      */
     private void showPhoneInputForm(AuthenticationFlowContext context) {
         LoginFormsProvider form = context.form();
@@ -75,43 +75,43 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Zpracuje zadání telefonního čísla a odešle SMS kód
+     * Processes phone number input and sends SMS code
      */
     private void handlePhoneInput(AuthenticationFlowContext context, MultivaluedMap<String, String> formData) {
         String phoneNumber = formData.getFirst(FORM_PHONE_NUMBER);
         String firstName = formData.getFirst(FORM_FIRST_NAME);
         String lastName = formData.getFirst(FORM_LAST_NAME);
 
-        // Validace telefonního čísla
+        // Phone number validation
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
-            showPhoneInputFormWithError(context, "Telefonní číslo je povinné");
+            showPhoneInputFormWithError(context, "Phone number is required");
             return;
         }
 
-        // Normalizace telefonního čísla
+        // Phone number normalization
         phoneNumber = normalizePhoneNumber(phoneNumber);
 
         if (!isValidPhoneNumber(phoneNumber)) {
-            showPhoneInputFormWithError(context, "Neplatné telefonní číslo");
+            showPhoneInputFormWithError(context, "Invalid phone number");
             return;
         }
 
-        // Kontrola jména (pouze pro nové uživatele)
+        // Name validation (only for new users)
         boolean createUserIfNotExists = getBooleanConfig(context, PhoneAuthenticatorFactory.CREATE_USER_IF_NOT_EXISTS, true);
         UserModel existingUser = findUserByPhoneNumber(context, phoneNumber);
 
         if (existingUser == null && createUserIfNotExists) {
             if (firstName == null || firstName.trim().isEmpty()) {
-                showPhoneInputFormWithError(context, "Jméno je povinné pro nové uživatele");
+                showPhoneInputFormWithError(context, "First name is required for new users");
                 return;
             }
             if (lastName == null || lastName.trim().isEmpty()) {
-                showPhoneInputFormWithError(context, "Příjmení je povinné pro nové uživatele");
+                showPhoneInputFormWithError(context, "Last name is required for new users");
                 return;
             }
         }
 
-        // Rate limiting kontrola
+        // Rate limiting check
         String clientIp = getClientIpAddress(context);
         int phoneLimit = getIntConfig(context, PhoneAuthenticatorFactory.RATE_LIMIT_PER_PHONE, 5);
         int ipLimit = getIntConfig(context, PhoneAuthenticatorFactory.RATE_LIMIT_PER_IP, 20);
@@ -126,20 +126,20 @@ public class PhoneAuthenticator implements Authenticator {
             return;
         }
 
-        // Generování SMS kódu
+        // SMS code generation
         String smsCode = generateSmsCode(context);
 
-        // Odeslání SMS
+        // Send SMS
         try {
             smsService.sendSms(context, phoneNumber, smsCode);
             logger.infof("SMS code sent to phone number: %s", maskPhoneNumber(phoneNumber));
         } catch (Exception e) {
             logger.error("Failed to send SMS", e);
-            showPhoneInputFormWithError(context, "Nepodařilo se odeslat SMS. Zkuste to znovu.");
+            showPhoneInputFormWithError(context, "Failed to send SMS. Please try again.");
             return;
         }
 
-        // Uložení dat do session
+        // Store data in session
         context.getAuthenticationSession().setAuthNote(PHONE_NUMBER, phoneNumber);
         context.getAuthenticationSession().setAuthNote(SMS_CODE, smsCode);
         context.getAuthenticationSession().setAuthNote(SMS_CODE_GENERATED_TIME, String.valueOf(Instant.now().getEpochSecond()));
@@ -152,12 +152,12 @@ public class PhoneAuthenticator implements Authenticator {
             context.getAuthenticationSession().setAuthNote(FORM_LAST_NAME, lastName);
         }
 
-        // Přechod na druhý krok
+        // Proceed to second step
         showCodeVerificationForm(context);
     }
 
     /**
-     * Zobrazí formulář pro ověření SMS kódu
+     * Displays the SMS code verification form
      */
     private void showCodeVerificationForm(AuthenticationFlowContext context) {
         String phoneNumber = context.getAuthenticationSession().getAuthNote(PHONE_NUMBER);
@@ -170,7 +170,7 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Zpracuje ověření SMS kódu
+     * Processes SMS code verification
      */
     private void handleCodeVerification(AuthenticationFlowContext context, MultivaluedMap<String, String> formData) {
         String enteredCode = formData.getFirst(FORM_SMS_CODE);
@@ -178,30 +178,30 @@ public class PhoneAuthenticator implements Authenticator {
         String phoneNumber = context.getAuthenticationSession().getAuthNote(PHONE_NUMBER);
         String generatedTimeStr = context.getAuthenticationSession().getAuthNote(SMS_CODE_GENERATED_TIME);
 
-        // Validace vstupu
+        // Input validation
         if (enteredCode == null || enteredCode.trim().isEmpty()) {
-            showCodeVerificationFormWithError(context, "SMS kód je povinný");
+            showCodeVerificationFormWithError(context, "SMS code is required");
             return;
         }
 
-        // Kontrola vypršení kódu
+        // Code expiration check
         if (generatedTimeStr != null) {
             long generatedTime = Long.parseLong(generatedTimeStr);
             long ttl = getLongConfig(context, PhoneAuthenticatorFactory.SMS_CODE_TTL, 300L);
             if (Instant.now().getEpochSecond() - generatedTime > ttl) {
-                showCodeVerificationFormWithError(context, "SMS kód vypršel. Požádejte o nový.");
+                showCodeVerificationFormWithError(context, "SMS code has expired. Please request a new one.");
                 return;
             }
         }
 
-        // Ověření kódu
+        // Code verification
         if (!enteredCode.equals(storedCode)) {
             logger.warnf("Invalid SMS code entered for phone: %s", maskPhoneNumber(phoneNumber));
-            showCodeVerificationFormWithError(context, "Neplatný SMS kód");
+            showCodeVerificationFormWithError(context, "Invalid SMS code");
             return;
         }
 
-        // Najít nebo vytvořit uživatele
+        // Find or create user
         UserModel user = findUserByPhoneNumber(context, phoneNumber);
 
         if (user == null) {
@@ -209,16 +209,16 @@ public class PhoneAuthenticator implements Authenticator {
             if (createUser) {
                 user = createUser(context, phoneNumber);
                 if (user == null) {
-                    showCodeVerificationFormWithError(context, "Nepodařilo se vytvořit uživatelský účet");
+                    showCodeVerificationFormWithError(context, "Failed to create user account");
                     return;
                 }
             } else {
-                showCodeVerificationFormWithError(context, "Uživatel s tímto telefonním číslem neexistuje");
+                showCodeVerificationFormWithError(context, "User with this phone number does not exist");
                 return;
             }
         }
 
-        // Úspěšná autentifikace
+        // Successful authentication
         context.setUser(user);
         context.success();
 
@@ -226,7 +226,7 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Vygeneruje SMS kód
+     * Generates SMS code
      */
     private String generateSmsCode(AuthenticationFlowContext context) {
         int codeLength = getIntConfig(context, PhoneAuthenticatorFactory.SMS_CODE_LENGTH, 6);
@@ -240,7 +240,7 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Najde uživatele podle telefonního čísla
+     * Finds a user by phone number
      */
     private UserModel findUserByPhoneNumber(AuthenticationFlowContext context, String phoneNumber) {
         return context.getSession().users()
@@ -250,7 +250,7 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Vytvoří nového uživatele
+     * Creates a new user
      */
     private UserModel createUser(AuthenticationFlowContext context, String phoneNumber) {
         String firstName = context.getAuthenticationSession().getAuthNote(FORM_FIRST_NAME);
@@ -274,15 +274,15 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Normalizuje telefonní číslo
+     * Normalizes phone number
      */
     private String normalizePhoneNumber(String phoneNumber) {
         if (phoneNumber == null) return null;
 
-        // Odstranění všech ne-číselných znaků kromě +
+        // Remove all non-numeric characters except +
         String normalized = phoneNumber.replaceAll("[^+\\d]", "");
 
-        // Pokud nezačína +, přidáme +420 pro české číslo
+        // If it doesn't start with +, add +420 for Czech numbers
         if (!normalized.startsWith("+")) {
             if (normalized.length() == 9) {
                 normalized = "+420" + normalized;
@@ -295,17 +295,17 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Validuje telefonní číslo
+     * Validates phone number
      */
     private boolean isValidPhoneNumber(String phoneNumber) {
         if (phoneNumber == null) return false;
 
-        // Základní validace - začíná + a má správnou délku
+        // Basic validation - starts with + and has correct length
         return phoneNumber.matches("^\\+[1-9]\\d{1,14}$");
     }
 
     /**
-     * Maskuje telefonní číslo pro logování
+     * Masks phone number for logging
      */
     private String maskPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.length() < 4) {
@@ -315,7 +315,7 @@ public class PhoneAuthenticator implements Authenticator {
         return phoneNumber.substring(0, 4) + "*".repeat(phoneNumber.length() - 4);
     }
 
-    // Utility metody pro konfiguraci
+    // Utility methods for configuration
     private String getStringConfig(AuthenticationFlowContext context, String key, String defaultValue) {
         if (context.getAuthenticatorConfig() == null ||
                 context.getAuthenticatorConfig().getConfig() == null) {
@@ -349,22 +349,22 @@ public class PhoneAuthenticator implements Authenticator {
     }
 
     /**
-     * Získá IP adresu klienta z HTTP požadavku
-     * Zohledňuje X-Forwarded-For header pro reverse proxy
+     * Gets client IP address from HTTP request
+     * Considers X-Forwarded-For header for reverse proxy
      */
     private String getClientIpAddress(AuthenticationFlowContext context) {
-        // Zkusíme X-Forwarded-For header (pro reverse proxy)
+        // Try X-Forwarded-For header (for reverse proxy)
         String xForwardedFor = context.getHttpRequest().getHttpHeaders()
                 .getHeaderString("X-Forwarded-For");
 
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            // X-Forwarded-For může obsahovat více IP adres oddělených čárkou
-            // První je originální klient
+            // X-Forwarded-For may contain multiple IP addresses separated by comma
+            // The first one is the original client
             String[] ips = xForwardedFor.split(",");
             return ips[0].trim();
         }
 
-        // Zkusíme X-Real-IP header
+        // Try X-Real-IP header
         String xRealIp = context.getHttpRequest().getHttpHeaders()
                 .getHeaderString("X-Real-IP");
 
@@ -372,7 +372,7 @@ public class PhoneAuthenticator implements Authenticator {
             return xRealIp.trim();
         }
 
-        // Fallback na remote address z connection
+        // Fallback to remote address from connection
         try {
             return context.getConnection().getRemoteAddr();
         } catch (Exception e) {
@@ -381,7 +381,7 @@ public class PhoneAuthenticator implements Authenticator {
         }
     }
 
-    // Error handling metody
+    // Error handling methods
     private void showPhoneInputFormWithError(AuthenticationFlowContext context, String errorMessage) {
         LoginFormsProvider form = context.form()
                 .setError(errorMessage);
@@ -413,7 +413,7 @@ public class PhoneAuthenticator implements Authenticator {
 
     @Override
     public void setRequiredActions(KeycloakSession session, RealmModel realm, UserModel user) {
-        // Žádné required actions
+        // No required actions
     }
 
     @Override

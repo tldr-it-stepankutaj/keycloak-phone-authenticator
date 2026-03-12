@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit testy pro PhoneAuthenticatorFactory
+ * Unit tests for PhoneAuthenticatorFactory
  */
 class PhoneAuthenticatorFactoryTest {
 
@@ -103,7 +103,7 @@ class PhoneAuthenticatorFactoryTest {
         assertNotNull(props);
         assertFalse(props.isEmpty());
 
-        // Kontrola Twilio properties
+        // Check Twilio properties
         assertTrue(hasProperty(props, PhoneAuthenticatorFactory.TWILIO_ACCOUNT_SID));
         assertTrue(hasProperty(props, PhoneAuthenticatorFactory.TWILIO_AUTH_TOKEN));
         assertTrue(hasProperty(props, PhoneAuthenticatorFactory.TWILIO_FROM_NUMBER));

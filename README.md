@@ -1,8 +1,11 @@
 # Keycloak Phone Number Authenticator
 
 [![CI](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/actions/workflows/ci.yml/badge.svg)](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/actions/workflows/ci.yml)
+[![Release](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/actions/workflows/release.yml/badge.svg)](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/actions/workflows/release.yml)
+![Java](https://img.shields.io/badge/Java-21+-blue?logo=openjdk)
+![Keycloak](https://img.shields.io/badge/Keycloak-26.x-blue)
+![License](https://img.shields.io/badge/License-Apache%202.0-green)
 [![Release](https://img.shields.io/github/v/release/tldr-it-stepankutaj/keycloak-phone-authenticator)](https://github.com/tldr-it-stepankutaj/keycloak-phone-authenticator/releases)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Custom Keycloak authenticator that enables phone number-based authentication with SMS verification via Twilio.
 

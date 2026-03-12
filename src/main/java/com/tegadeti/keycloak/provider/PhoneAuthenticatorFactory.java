@@ -13,14 +13,14 @@ import org.keycloak.provider.ProviderConfigurationBuilder;
 import java.util.List;
 
 /**
- * Factory pro Phone Number Authenticator
- * Vytváří instance PhoneAuthenticator a definuje konfigurační možnosti
+ * Factory for Phone Number Authenticator
+ * Creates PhoneAuthenticator instances and defines configuration options
  */
 public class PhoneAuthenticatorFactory implements AuthenticatorFactory, ConfigurableAuthenticatorFactory {
 
     public static final String PROVIDER_ID = "phone-authenticator";
 
-    // Konfigurační properties
+    // Configuration properties
     public static final String TWILIO_ACCOUNT_SID = "twilio.account.sid";
     public static final String TWILIO_AUTH_TOKEN = "twilio.auth.token";
     public static final String TWILIO_FROM_NUMBER = "twilio.from.number";
@@ -30,7 +30,7 @@ public class PhoneAuthenticatorFactory implements AuthenticatorFactory, Configur
 
     // SMS Template
     public static final String SMS_MESSAGE_TEMPLATE = "sms.message.template";
-    public static final String DEFAULT_SMS_TEMPLATE = "Váš ověřovací kód: {code}\n\nKód je platný {ttl} minut.";
+    public static final String DEFAULT_SMS_TEMPLATE = "Your verification code: {code}\n\nThe code is valid for {ttl} minutes.";
 
     // Rate Limiting
     public static final String RATE_LIMIT_PER_PHONE = "rate.limit.per.phone";
@@ -87,12 +87,12 @@ public class PhoneAuthenticatorFactory implements AuthenticatorFactory, Configur
 
     @Override
     public void init(Config.Scope config) {
-        // Inicializace factory
+        // Factory initialization
     }
 
     @Override
     public void postInit(KeycloakSessionFactory factory) {
-        // Post-inicializace
+        // Post-initialization
     }
 
     @Override

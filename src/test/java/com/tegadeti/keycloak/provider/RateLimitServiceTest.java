@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit testy pro RateLimitService
+ * Unit tests for RateLimitService
  */
 class RateLimitServiceTest {
 
@@ -16,7 +16,7 @@ class RateLimitServiceTest {
     @BeforeEach
     void setUp() {
         rateLimitService = RateLimitService.getInstance();
-        // Reset rate limits pro čistý test
+        // Reset rate limits for clean test
         rateLimitService.resetPhoneLimit("+420123456789");
         rateLimitService.resetPhoneLimit("+420987654321");
         rateLimitService.resetIpLimit("192.168.1.1");
@@ -49,12 +49,12 @@ class RateLimitServiceTest {
         String phone = "+420987654321";
         int limit = 3;
 
-        // První 3 požadavky by měly projít
+        // First 3 requests should pass
         for (int i = 0; i < limit; i++) {
             assertTrue(rateLimitService.checkAndRecordPhoneRequest(phone, limit));
         }
 
-        // 4. požadavek by měl být zablokován
+        // 4th request should be blocked
         assertFalse(rateLimitService.checkAndRecordPhoneRequest(phone, limit));
     }
 
@@ -135,7 +135,7 @@ class RateLimitServiceTest {
 
         rateLimitService.resetPhoneLimit(phone);
 
-        // Vyčerpáme limit
+        // Exhaust the limit
         rateLimitService.checkAndRecordPhoneRequest(phone, limit);
         rateLimitService.checkAndRecordPhoneRequest(phone, limit);
         assertFalse(rateLimitService.checkAndRecordPhoneRequest(phone, limit));
@@ -143,7 +143,7 @@ class RateLimitServiceTest {
         // Reset
         rateLimitService.resetPhoneLimit(phone);
 
-        // Nyní by měl být opět povolen
+        // Should be allowed again now
         assertTrue(rateLimitService.checkAndRecordPhoneRequest(phone, limit));
     }
 
@@ -192,12 +192,12 @@ class RateLimitServiceTest {
         RateLimitService.RateLimitResult result = new RateLimitService.RateLimitResult(
                 false,
                 RateLimitService.RateLimitType.PHONE,
-                120 // 2 minuty
+                120 // 2 minutes
         );
 
         assertFalse(result.isAllowed());
         assertEquals(RateLimitService.RateLimitType.PHONE, result.getExceededType());
-        assertTrue(result.getErrorMessage().contains("telefonn"));
+        assertTrue(result.getErrorMessage().contains("phone number"));
     }
 
     @Test
@@ -206,7 +206,7 @@ class RateLimitServiceTest {
         RateLimitService.RateLimitResult result = new RateLimitService.RateLimitResult(
                 false,
                 RateLimitService.RateLimitType.IP,
-                300 // 5 minut
+                300 // 5 minutes
         );
 
         assertFalse(result.isAllowed());
@@ -235,12 +235,12 @@ class RateLimitServiceTest {
         rateLimitService.resetPhoneLimit(phone1);
         rateLimitService.resetPhoneLimit(phone2);
 
-        // Vyčerpáme limit pro phone1
+        // Exhaust the limit for phone1
         rateLimitService.checkAndRecordPhoneRequest(phone1, limit);
         rateLimitService.checkAndRecordPhoneRequest(phone1, limit);
         assertFalse(rateLimitService.checkAndRecordPhoneRequest(phone1, limit));
 
-        // phone2 by měl být stále OK
+        // phone2 should still be OK
         assertTrue(rateLimitService.checkAndRecordPhoneRequest(phone2, limit));
     }
 
@@ -257,7 +257,7 @@ class RateLimitServiceTest {
         rateLimitService.checkAndRecordIpRequest(ip1, limit);
         assertFalse(rateLimitService.checkAndRecordIpRequest(ip1, limit));
 
-        // ip2 by měl být stále OK
+        // ip2 should still be OK
         assertTrue(rateLimitService.checkAndRecordIpRequest(ip2, limit));
     }
 }

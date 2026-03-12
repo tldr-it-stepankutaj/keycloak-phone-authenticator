@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Service pro rate limiting SMS požadavků
- * Implementuje limity per telefon a per IP adresa
+ * Service for rate limiting SMS requests
+ * Implements limits per phone number and per IP address
  */
 public class RateLimitService {
 
@@ -19,21 +19,21 @@ public class RateLimitService {
     // Singleton instance
     private static final RateLimitService INSTANCE = new RateLimitService();
 
-    // Výchozí hodnoty
+    // Default values
     private static final int DEFAULT_RATE_LIMIT_PER_PHONE = 5;
     private static final int DEFAULT_RATE_LIMIT_PER_IP = 20;
-    private static final long WINDOW_SIZE_SECONDS = 3600; // 1 hodina
+    private static final long WINDOW_SIZE_SECONDS = 3600; // 1 hour
 
-    // Cache pro rate limiting - klíč -> seznam časových značek požadavků
+    // Cache for rate limiting - key -> list of request timestamps
     private final Map<String, CopyOnWriteArrayList<Long>> phoneRequests = new ConcurrentHashMap<>();
     private final Map<String, CopyOnWriteArrayList<Long>> ipRequests = new ConcurrentHashMap<>();
 
-    // Prefixy pro klíče
+    // Key prefixes
     private static final String PHONE_PREFIX = "phone:";
     private static final String IP_PREFIX = "ip:";
 
     private RateLimitService() {
-        // Private constructor pro singleton
+        // Private constructor for singleton
     }
 
     public static RateLimitService getInstance() {
@@ -41,11 +41,11 @@ public class RateLimitService {
     }
 
     /**
-     * Zkontroluje a zaznamená požadavek pro telefonní číslo
+     * Checks and records a request for a phone number
      *
-     * @param phoneNumber Telefonní číslo
-     * @param limit       Maximální počet požadavků za hodinu
-     * @return true pokud je požadavek povolen, false pokud je limit překročen
+     * @param phoneNumber Phone number
+     * @param limit       Maximum number of requests per hour
+     * @return true if the request is allowed, false if the limit is exceeded
      */
     public boolean checkAndRecordPhoneRequest(String phoneNumber, int limit) {
         if (phoneNumber == null || phoneNumber.isEmpty()) {
@@ -57,11 +57,11 @@ public class RateLimitService {
     }
 
     /**
-     * Zkontroluje a zaznamená požadavek pro IP adresu
+     * Checks and records a request for an IP address
      *
-     * @param ipAddress IP adresa
-     * @param limit     Maximální počet požadavků za hodinu
-     * @return true pokud je požadavek povolen, false pokud je limit překročen
+     * @param ipAddress IP address
+     * @param limit     Maximum number of requests per hour
+     * @return true if the request is allowed, false if the limit is exceeded
      */
     public boolean checkAndRecordIpRequest(String ipAddress, int limit) {
         if (ipAddress == null || ipAddress.isEmpty()) {
@@ -73,28 +73,28 @@ public class RateLimitService {
     }
 
     /**
-     * Kombinovaná kontrola pro telefon i IP
+     * Combined check for both phone and IP
      *
-     * @param phoneNumber   Telefonní číslo
-     * @param ipAddress     IP adresa
-     * @param phoneLimit    Limit pro telefon
-     * @param ipLimit       Limit pro IP
-     * @return RateLimitResult s informací o výsledku
+     * @param phoneNumber   Phone number
+     * @param ipAddress     IP address
+     * @param phoneLimit    Limit for phone
+     * @param ipLimit       Limit for IP
+     * @return RateLimitResult with result information
      */
     public RateLimitResult checkRateLimit(String phoneNumber, String ipAddress, int phoneLimit, int ipLimit) {
-        // Nejdříve kontrola IP (méně specifická)
+        // First check IP (less specific)
         if (!checkIpWithoutRecord(ipAddress, ipLimit)) {
             logger.warnf("Rate limit exceeded for IP: %s", maskIpAddress(ipAddress));
             return new RateLimitResult(false, RateLimitType.IP, getRemainingTime(ipRequests, IP_PREFIX + ipAddress));
         }
 
-        // Pak kontrola telefonu (specifičtější)
+        // Then check phone (more specific)
         if (!checkPhoneWithoutRecord(phoneNumber, phoneLimit)) {
             logger.warnf("Rate limit exceeded for phone: %s", maskPhoneNumber(phoneNumber));
             return new RateLimitResult(false, RateLimitType.PHONE, getRemainingTime(phoneRequests, PHONE_PREFIX + phoneNumber));
         }
 
-        // Obě kontroly prošly - zaznamenáme požadavky
+        // Both checks passed - record the requests
         recordRequest(phoneRequests, PHONE_PREFIX + phoneNumber);
         recordRequest(ipRequests, IP_PREFIX + ipAddress);
 
@@ -102,7 +102,7 @@ public class RateLimitService {
     }
 
     /**
-     * Získá počet zbývajících požadavků pro telefon
+     * Gets the number of remaining requests for a phone number
      */
     public int getRemainingPhoneRequests(String phoneNumber, int limit) {
         int effectiveLimit = limit > 0 ? limit : DEFAULT_RATE_LIMIT_PER_PHONE;
@@ -110,7 +110,7 @@ public class RateLimitService {
     }
 
     /**
-     * Získá počet zbývajících požadavků pro IP
+     * Gets the number of remaining requests for an IP address
      */
     public int getRemainingIpRequests(String ipAddress, int limit) {
         int effectiveLimit = limit > 0 ? limit : DEFAULT_RATE_LIMIT_PER_IP;
@@ -118,7 +118,7 @@ public class RateLimitService {
     }
 
     /**
-     * Vyčistí staré záznamy z cache (pro údržbu)
+     * Cleans up old entries from cache (for maintenance)
      */
     public void cleanupExpiredEntries() {
         long cutoff = Instant.now().getEpochSecond() - WINDOW_SIZE_SECONDS;
@@ -130,7 +130,7 @@ public class RateLimitService {
     }
 
     /**
-     * Resetuje rate limit pro konkrétní telefon (pro admin účely)
+     * Resets rate limit for a specific phone number (for admin purposes)
      */
     public void resetPhoneLimit(String phoneNumber) {
         phoneRequests.remove(PHONE_PREFIX + phoneNumber);
@@ -138,14 +138,14 @@ public class RateLimitService {
     }
 
     /**
-     * Resetuje rate limit pro konkrétní IP (pro admin účely)
+     * Resets rate limit for a specific IP address (for admin purposes)
      */
     public void resetIpLimit(String ipAddress) {
         ipRequests.remove(IP_PREFIX + ipAddress);
         logger.infof("Rate limit reset for IP: %s", maskIpAddress(ipAddress));
     }
 
-    // === Private metody ===
+    // === Private methods ===
 
     private boolean checkAndRecord(Map<String, CopyOnWriteArrayList<Long>> cache, String key, int limit) {
         long now = Instant.now().getEpochSecond();
@@ -153,15 +153,15 @@ public class RateLimitService {
 
         CopyOnWriteArrayList<Long> timestamps = cache.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>());
 
-        // Odstraníme staré záznamy
+        // Remove old entries
         timestamps.removeIf(ts -> ts < windowStart);
 
-        // Kontrola limitu
+        // Check limit
         if (timestamps.size() >= limit) {
             return false;
         }
 
-        // Záznam nového požadavku
+        // Record new request
         timestamps.add(now);
         return true;
     }
@@ -190,7 +190,7 @@ public class RateLimitService {
             return true;
         }
 
-        // Počítáme pouze platné záznamy
+        // Count only valid entries
         long validCount = timestamps.stream()
                 .filter(ts -> ts >= windowStart)
                 .count();
@@ -227,13 +227,13 @@ public class RateLimitService {
 
         long windowStart = Instant.now().getEpochSecond() - WINDOW_SIZE_SECONDS;
 
-        // Najdeme nejstarší platný záznam
+        // Find the oldest valid entry
         long oldestValid = timestamps.stream()
                 .filter(ts -> ts >= windowStart)
                 .min(Long::compareTo)
                 .orElse(Instant.now().getEpochSecond());
 
-        // Čas do vypršení nejstaršího záznamu
+        // Time until the oldest entry expires
         return Math.max(0, (oldestValid + WINDOW_SIZE_SECONDS) - Instant.now().getEpochSecond());
     }
 
@@ -244,10 +244,10 @@ public class RateLimitService {
             Map.Entry<String, CopyOnWriteArrayList<Long>> entry = iterator.next();
             CopyOnWriteArrayList<Long> timestamps = entry.getValue();
 
-            // Odstraníme staré záznamy
+            // Remove old entries
             timestamps.removeIf(ts -> ts < cutoff);
 
-            // Pokud je seznam prázdný, odstraníme celý záznam
+            // If the list is empty, remove the entire entry
             if (timestamps.isEmpty()) {
                 iterator.remove();
             }
@@ -265,14 +265,14 @@ public class RateLimitService {
         if (ipAddress == null) {
             return "****";
         }
-        // Pro IPv4 zobrazíme první oktet
+        // For IPv4 show first octet
         if (ipAddress.contains(".")) {
             int firstDot = ipAddress.indexOf('.');
             if (firstDot > 0) {
                 return ipAddress.substring(0, firstDot) + ".***";
             }
         }
-        // Pro IPv6 zobrazíme první segment
+        // For IPv6 show first segment
         if (ipAddress.contains(":")) {
             int firstColon = ipAddress.indexOf(':');
             if (firstColon > 0) {
@@ -282,10 +282,10 @@ public class RateLimitService {
         return "****";
     }
 
-    // === Vnitřní třídy ===
+    // === Inner classes ===
 
     /**
-     * Typ rate limitu, který byl překročen
+     * Type of rate limit that was exceeded
      */
     public enum RateLimitType {
         PHONE,
@@ -293,7 +293,7 @@ public class RateLimitService {
     }
 
     /**
-     * Výsledek rate limit kontroly
+     * Rate limit check result
      */
     public static class RateLimitResult {
         private final boolean allowed;
@@ -325,9 +325,9 @@ public class RateLimitService {
 
             long minutes = retryAfterSeconds / 60;
             if (exceededType == RateLimitType.PHONE) {
-                return String.format("Příliš mnoho požadavků pro toto telefonní číslo. Zkuste to znovu za %d minut.", minutes + 1);
+                return String.format("Too many requests for this phone number. Please try again in %d minutes.", minutes + 1);
             } else {
-                return String.format("Příliš mnoho požadavků z vaší IP adresy. Zkuste to znovu za %d minut.", minutes + 1);
+                return String.format("Too many requests from your IP address. Please try again in %d minutes.", minutes + 1);
             }
         }
     }

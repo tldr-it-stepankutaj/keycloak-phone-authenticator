@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit testy pro PhoneAuthenticator
- * Testujeme pomocné metody a logiku bez mockování Keycloak interfaces
+ * Unit tests for PhoneAuthenticator
+ * Testing helper methods and logic without mocking Keycloak interfaces
  */
 class PhoneAuthenticatorTest {
 
@@ -28,7 +28,7 @@ class PhoneAuthenticatorTest {
     @Test
     @DisplayName("configuredFor should return true for any input")
     void testConfiguredFor() {
-        // Metoda vždy vrací true
+        // Method always returns true
         assertTrue(authenticator.configuredFor(null, null, null));
     }
 
@@ -45,7 +45,7 @@ class PhoneAuthenticatorTest {
     }
 
     // =========================================================================
-    // Testy pro phone number validaci (E.164 formát)
+    // Tests for phone number validation (E.164 format)
     // =========================================================================
 
     @Test
@@ -68,14 +68,14 @@ class PhoneAuthenticatorTest {
     @DisplayName("Phone validation - invalid formats")
     void testInvalidPhoneFormats() {
         String[] invalidNumbers = {
-                "123456789",      // bez +
-                "+0123456789",    // začíná +0
-                "++420123456789", // dvojité +
-                "+4",             // příliš krátké (jen 1 číslice)
-                "",               // prázdné
-                "abcdefghij",     // písmena
-                "+",              // jen plus
-                "+abc123"         // mix
+                "123456789",      // without +
+                "+0123456789",    // starts with +0
+                "++420123456789", // double +
+                "+4",             // too short (only 1 digit)
+                "",               // empty
+                "abcdefghij",     // letters
+                "+",              // just plus
+                "+abc123"         // mixed
         };
 
         for (String number : invalidNumbers) {
@@ -90,7 +90,7 @@ class PhoneAuthenticatorTest {
     }
 
     // =========================================================================
-    // Testy pro maskování telefonního čísla
+    // Tests for phone number masking
     // =========================================================================
 
     @Test
@@ -132,7 +132,7 @@ class PhoneAuthenticatorTest {
     }
 
     // =========================================================================
-    // Testy pro normalizaci telefonního čísla
+    // Tests for phone number normalization
     // =========================================================================
 
     @Test
@@ -187,17 +187,17 @@ class PhoneAuthenticatorTest {
     @Test
     @DisplayName("Normalize empty should return empty with +")
     void testNormalizeEmpty() {
-        // prázdný string po odstranění nečíselných znaků
+        // empty string after removing non-numeric characters
         String result = normalizePhoneNumber("");
         assertEquals("", result);
     }
 
     // =========================================================================
-    // Helper methods (kopie logiky z PhoneAuthenticator)
+    // Helper methods (copy of logic from PhoneAuthenticator)
     // =========================================================================
 
     /**
-     * Simulace validace E.164 formátu
+     * Simulates E.164 format validation
      */
     private boolean isValidE164(String phoneNumber) {
         if (phoneNumber == null) return false;
@@ -205,7 +205,7 @@ class PhoneAuthenticatorTest {
     }
 
     /**
-     * Simulace maskování telefonního čísla
+     * Simulates phone number masking
      */
     private String maskPhoneNumber(String phoneNumber) {
         if (phoneNumber == null || phoneNumber.length() < 4) {
@@ -215,15 +215,15 @@ class PhoneAuthenticatorTest {
     }
 
     /**
-     * Simulace normalizace telefonního čísla
+     * Simulates phone number normalization
      */
     private String normalizePhoneNumber(String phoneNumber) {
         if (phoneNumber == null) return null;
 
-        // Odstranění všech ne-číselných znaků kromě +
+        // Remove all non-numeric characters except +
         String normalized = phoneNumber.replaceAll("[^+\\d]", "");
 
-        // Pokud nezačíná +, přidáme +420 pro české číslo
+        // If it doesn't start with +, add +420 for Czech numbers
         if (!normalized.startsWith("+")) {
             if (normalized.length() == 9) {
                 normalized = "+420" + normalized;
