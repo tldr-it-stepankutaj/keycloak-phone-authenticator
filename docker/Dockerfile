@@ -5,7 +5,7 @@
 # Or use: ./build.sh docker
 # =============================================================================
 
-FROM quay.io/keycloak/keycloak:26.3.1
+FROM quay.io/keycloak/keycloak:26.5.6
 
 LABEL maintainer="tegadeti"
 LABEL description="Keycloak with Phone Number Authenticator"
