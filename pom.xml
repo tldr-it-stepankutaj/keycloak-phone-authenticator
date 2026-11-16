@@ -17,8 +17,8 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <keycloak.version>26.5.5</keycloak.version>
-        <twilio.version>8.3.0</twilio.version>
+        <keycloak.version>26.3.1</keycloak.version>
+        <twilio.version>11.3.5</twilio.version>
         <jackson.version>2.15.2</jackson.version>
     </properties>
 
@@ -107,7 +107,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
