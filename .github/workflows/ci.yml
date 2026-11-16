@@ -29,11 +29,26 @@ jobs:
 
     - name: Verify JAR structure
       run: |
-        echo "=== JAR Contents ==="
-        jar tf target/keycloak-phone-authenticator-*.jar | head -50
-        echo ""
-        echo "=== Checking SPI registration ==="
-        jar tf target/keycloak-phone-authenticator-*.jar | grep -E "META-INF/services|AuthenticatorFactory"
+        JAR=$(ls target/keycloak-phone-authenticator-*.jar | head -1)
+        echo "=== $JAR ==="
+        jar tf "$JAR" > jar-contents.txt
+        fail=0
+        for entry in \
+          META-INF/services/org.keycloak.authentication.AuthenticatorFactory \
+          com/tegadeti/keycloak/provider/PhoneAuthenticatorFactory.class \
+          com/tegadeti/keycloak/provider/PhoneAuthenticator.class \
+          com/tegadeti/keycloak/provider/SmsService.class \
+          com/tegadeti/keycloak/provider/TwilioSmsProvider.class \
+          com/tegadeti/keycloak/provider/HttpSmsProvider.class \
+          com/twilio/rest/api/v2010/account/Message.class \
+          com/google/i18n/phonenumbers/PhoneNumberUtil.class; do
+          if grep -qx "$entry" jar-contents.txt; then echo "OK      $entry"; else echo "MISSING $entry"; fail=1; fi
+        done
+        # Keycloak provides Jackson - a second copy in the jar would conflict
+        if grep -q "^com/fasterxml/jackson/\(core\|databind\|annotation\|datatype\)/" jar-contents.txt; then
+          echo "Jackson must not be bundled"; fail=1
+        fi
+        exit $fail
 
     - name: Upload JAR artifact
       uses: actions/upload-artifact@v7
