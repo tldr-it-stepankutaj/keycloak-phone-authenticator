@@ -52,7 +52,15 @@
                 <div id="kc-info-wrapper" class="${properties.kcFormOptionsWrapperClass!}">
                     <div class="kc-info-text">
                         <p>${msg("didNotReceiveSms")}</p>
-                        <a href="${url.loginRestartFlowUrl!}" id="resend-sms">${msg("resendCode")}</a>
+                        <form id="kc-resend-form" action="${url.loginAction}" method="post" class="kc-inline-form">
+                            <button type="submit" name="resend" value="true" id="resend-sms" class="kc-link-button">${msg("resendCode")}</button>
+                            <span id="resend-cooldown"></span>
+                        </form>
+                        <#if !(secondFactor!false)>
+                        <form id="kc-change-number-form" action="${url.loginAction}" method="post" class="kc-inline-form">
+                            <button type="submit" name="changeNumber" value="true" id="change-number" class="kc-link-button">${msg("changeNumber")}</button>
+                        </form>
+                        </#if>
                     </div>
                 </div>
             </div>
@@ -78,21 +86,39 @@
                 font-weight: bold;
             }
 
-            #resend-sms {
+            .kc-inline-form {
+                display: inline-block;
+                margin: 0 12px 0 0;
+            }
+
+            .kc-link-button {
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
                 color: #1976d2;
                 text-decoration: none;
                 font-weight: 500;
+                font-size: inherit;
             }
 
-            #resend-sms:hover {
+            .kc-link-button:hover:not(:disabled) {
                 text-decoration: underline;
+            }
+
+            .kc-link-button:disabled {
+                color: #999;
+                cursor: not-allowed;
             }
         </style>
 
         <script>
             (function() {
-                // Odpočítávání času (výchozí 5 minut)
-                var timeLeft = 300;
+                // Remaining validity of the code, computed by the server from the configured TTL
+                var timeLeft = ${(codeSecondsLeft!300)?c};
+                var resendIn = ${(resendCooldownSeconds!0)?c};
+                var resendButton = document.getElementById('resend-sms');
+                var resendCooldown = document.getElementById('resend-cooldown');
                 var countdownElement = document.getElementById('countdown');
                 var countdownText = document.getElementById('countdown-text');
                 var smsCodeInput = document.getElementById('smsCode');
@@ -116,6 +142,20 @@
                 }
 
                 updateCountdown();
+
+                // Resend is allowed after a short cooldown (enforced by the server as well)
+                function updateResend() {
+                    if (resendIn > 0) {
+                        resendButton.disabled = true;
+                        resendCooldown.textContent = '(' + resendIn + ' s)';
+                        resendIn--;
+                        setTimeout(updateResend, 1000);
+                    } else {
+                        resendButton.disabled = false;
+                        resendCooldown.textContent = '';
+                    }
+                }
+                updateResend();
 
                 // Auto-submit při zadání kódu (pokud má správnou délku 4-8 číslic)
                 smsCodeInput.addEventListener('input', function(e) {

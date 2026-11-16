@@ -1,0 +1,67 @@
+{
+  "attributes": [
+    {
+      "name": "username",
+      "displayName": "${username}",
+      "validations": {
+        "length": { "min": 3, "max": 255 },
+        "username-prohibited-characters": {},
+        "up-username-not-idn-homograph": {}
+      },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "email",
+      "displayName": "${email}",
+      "validations": {
+        "email": {},
+        "length": { "max": 255 }
+      },
+      "required": { "roles": ["admin"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "firstName",
+      "displayName": "${firstName}",
+      "validations": {
+        "length": { "max": 255 },
+        "person-name-prohibited-characters": {}
+      },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "lastName",
+      "displayName": "${lastName}",
+      "validations": {
+        "length": { "max": 255 },
+        "person-name-prohibited-characters": {}
+      },
+      "required": { "roles": ["user"] },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin", "user"] },
+      "multivalued": false
+    },
+    {
+      "name": "phoneNumber",
+      "displayName": "${phoneNumber}",
+      "validations": {
+        "pattern": {
+          "pattern": "^\\+[1-9]\\d{1,14}$",
+          "error-message": "invalidPhoneNumber"
+        }
+      },
+      "permissions": { "view": ["admin", "user"], "edit": ["admin"] },
+      "multivalued": false
+    },
+    {
+      "name": "phoneNumberVerified",
+      "displayName": "${phoneNumberVerified}",
+      "permissions": { "view": ["admin"], "edit": ["admin"] },
+      "multivalued": false
+    }
+  ],
+  "unmanagedAttributePolicy": "ADMIN_VIEW"
+}

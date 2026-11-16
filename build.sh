@@ -115,7 +115,7 @@ cmd_verify() {
     fi
 
     # Check main classes
-    for class in PhoneAuthenticatorFactory PhoneAuthenticator TwilioSmsService RateLimitService; do
+    for class in PhoneAuthenticatorFactory PhoneAuthenticator PhoneNumberUtils SmsService SmsProvider TwilioSmsProvider HttpSmsProvider RateLimitService; do
         if jar tf "$JAR_FILE" | grep -q "com/tegadeti/keycloak/provider/${class}.class"; then
             log_success "$class found"
         else

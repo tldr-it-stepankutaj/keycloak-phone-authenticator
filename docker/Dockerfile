@@ -5,11 +5,11 @@
 # Or use: ./build.sh docker
 # =============================================================================
 
-FROM quay.io/keycloak/keycloak:26.6.2
+FROM quay.io/keycloak/keycloak:26.8.2
 
 LABEL maintainer="tegadeti"
 LABEL description="Keycloak with Phone Number Authenticator"
-LABEL version="1.0.0"
+LABEL version="1.0.4"
 
 # Switch to root for installation
 USER root

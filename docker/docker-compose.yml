@@ -16,6 +16,10 @@ services:
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: password
 
+      # Health endpoints (management port 9000, used by the healthcheck below). start-dev re-runs the
+      # build, so this has to be set at runtime as well, not only in the Dockerfile.
+      KC_HEALTH_ENABLED: "true"
+
       # Logging
       KC_LOG_LEVEL: INFO
 
@@ -33,11 +37,15 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      # Keycloak 25+ serves /health on the management port 9000 and the image has no curl
+      test:
+        - CMD-SHELL
+        - |
+          exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && grep -q '"status": "UP"' <&3
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 5
+      start_period: 90s
 
   postgres:
     image: postgres:15-alpine

@@ -260,4 +260,63 @@ class RateLimitServiceTest {
         // ip2 should still be OK
         assertTrue(rateLimitService.checkAndRecordIpRequest(ip2, limit));
     }
+
+    @Test
+    @DisplayName("Limit 0 (or negative) disables the check instead of falling back to a default")
+    void zeroLimitDisables() {
+        String phone = "+420111000111";
+        for (int i = 0; i < 50; i++) {
+            assertTrue(rateLimitService.checkAndRecordPhoneRequest(phone, 0));
+            assertTrue(rateLimitService.checkAndRecordIpRequest("172.16.0.9", -1));
+        }
+        assertTrue(rateLimitService.checkRateLimit(phone, "172.16.0.9", 0, 0).isAllowed());
+        assertEquals(Integer.MAX_VALUE, rateLimitService.getRemainingPhoneRequests(phone, 0));
+    }
+
+    @Test
+    @DisplayName("Rejected combined check does not consume quota")
+    void rejectedRequestIsNotRecorded() {
+        RateLimitService.RateLimitStore store = new RateLimitService.InMemoryStore();
+        assertTrue(rateLimitService.checkRateLimit(store, "+420222000222", "172.16.1.1", 5, 1).isAllowed());
+        // IP limit (1) is hit, the phone must not be charged for the rejected attempt
+        assertFalse(rateLimitService.checkRateLimit(store, "+420222000222", "172.16.1.1", 5, 1).isAllowed());
+        assertEquals(1, store.get("phone:+420222000222", 0).size());
+    }
+
+    @Test
+    @DisplayName("Explicit store is used (this is what makes the limit cluster-wide)")
+    void customStore() {
+        RateLimitService.InMemoryStore shared = new RateLimitService.InMemoryStore();
+        assertTrue(rateLimitService.checkAndRecordPhoneRequest(shared, "+420333000333", 1));
+        assertFalse(rateLimitService.checkAndRecordPhoneRequest(shared, "+420333000333", 1));
+        // another store (= another node without sharing) knows nothing
+        assertTrue(rateLimitService.checkAndRecordPhoneRequest(new RateLimitService.InMemoryStore(), "+420333000333", 1));
+    }
+
+    @Test
+    @DisplayName("Result exposes message key and parameter for the theme")
+    void resultMessageKey() {
+        RateLimitService.RateLimitResult phone = new RateLimitService.RateLimitResult(
+                false, RateLimitService.RateLimitType.PHONE, 125);
+        assertEquals("rateLimitPhone", phone.getMessageKey());
+        assertEquals(3, phone.getRetryAfterMinutes());
+        assertEquals("rateLimitIp", new RateLimitService.RateLimitResult(
+                false, RateLimitService.RateLimitType.IP, 0).getMessageKey());
+        assertNull(new RateLimitService.RateLimitResult(true, null, 0).getMessageKey());
+    }
+
+    @Test
+    @DisplayName("Store drops expired timestamps and empty keys (no unbounded growth)")
+    void expiredEntriesAreRemoved() {
+        RateLimitService.InMemoryStore store = new RateLimitService.InMemoryStore();
+        long now = java.time.Instant.now().getEpochSecond();
+        store.add("old", now - 7200, 0);
+        store.add("fresh", now, 0);
+
+        store.removeOlderThan(now - RateLimitService.WINDOW_SIZE_SECONDS);
+
+        assertEquals(1, store.size());
+        assertTrue(store.get("old", 0).isEmpty());
+        assertEquals(1, store.get("fresh", 0).size());
+    }
 }

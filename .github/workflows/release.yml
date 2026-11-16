@@ -47,6 +47,7 @@ jobs:
         mkdir -p dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}
         cp target/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
         cp -r themes/phone-theme dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
+        cp -r examples dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
         cp README.md dist/keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
         cd dist
         tar -czvf ../keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}/
@@ -65,7 +66,7 @@ jobs:
         body: |
           ## Keycloak Phone Authenticator v${{ steps.version.outputs.VERSION }}
 
-          Custom Keycloak authenticator for phone number-based authentication with SMS verification via Twilio.
+          Custom Keycloak authenticator for phone number-based authentication with SMS verification (Twilio or generic HTTP gateway), usable as first or second factor.
 
           ### Requirements
           - Keycloak 26.x
@@ -77,7 +78,7 @@ jobs:
           |------|-------------|
           | `keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}.jar` | Provider JAR only |
           | `phone-theme-${{ steps.version.outputs.VERSION }}.tar.gz` | Login theme only |
-          | `keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz` | Complete package (JAR + theme + README) |
+          | `keycloak-phone-authenticator-${{ steps.version.outputs.VERSION }}-complete.tar.gz` | Complete package (JAR + theme + examples + README) |
 
           ### Quick Installation
 
