@@ -21,7 +21,7 @@
         <twilio.version>13.2.0</twilio.version>
         <jackson.version>2.23.0</jackson.version>
         <mockito.version>5.24.0</mockito.version>
-        <libphonenumber.version>9.0.43</libphonenumber.version>
+        <libphonenumber.version>9.0.44</libphonenumber.version>
     </properties>
 
     <dependencyManagement>
